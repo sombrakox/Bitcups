@@ -1,0 +1,402 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-foreground: var(--whatsapp-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-muted: var(--hero-muted);
+  --color-premium: var(--premium);
+  --color-premium-foreground: var(--premium-foreground);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.985 0.002 90);
+  --foreground: oklch(0.22 0.005 90);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.205 0.004 90);
+  --primary-foreground: oklch(0.985 0.002 90);
+  --secondary: oklch(0.947 0.004 90);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.958 0.002 90);
+  --muted-foreground: oklch(0.49 0.008 90);
+  --accent: oklch(0.88 0.18 95);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --whatsapp: oklch(0.62 0.16 150);
+  --whatsapp-foreground: oklch(0.99 0 0);
+  --border: oklch(0.89 0.005 90);
+  --input: var(--border);
+  --ring: var(--accent);
+  --hero-foreground: oklch(0.99 0 0);
+  --hero-muted: oklch(0.83 0.002 90);
+  --premium: oklch(0.19 0.003 90);
+  --premium-foreground: oklch(0.98 0.002 90);
+  --gradient-hero: linear-gradient(90deg, oklch(0.13 0.003 90 / 0.96) 0%, oklch(0.13 0.003 90 / 0.88) 30%, oklch(0.13 0.003 90 / 0.16) 72%);
+  --shadow-card: 0 8px 24px -16px oklch(0.2 0.005 90 / 0.2);
+  --shadow-lift: 0 18px 36px -20px oklch(0.2 0.005 90 / 0.3);
+  --shadow-header: 0 5px 22px oklch(0.1 0 0 / 0.12);
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+  ::selection { background: var(--accent); color: var(--accent-foreground); }
+}
+
+@utility bg-hero { background-image: var(--gradient-hero); }
+@utility shadow-card { box-shadow: var(--shadow-card); }
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes hero-image-in {
+  from { transform: scale(1.045); }
+  to { transform: scale(1); }
+}
+.page-transition { animation: page-in 550ms var(--ease-premium) both; }
+[data-motion="pending"] { opacity: 0; transform: translateY(22px); }
+[data-motion="visible"] { animation: reveal-up 850ms var(--ease-premium) both; }
+.hero-photo { animation: hero-image-in 1800ms var(--ease-premium) both; }
+.hero-copy > * { animation: reveal-up 950ms var(--ease-premium) both; }
+.hero-copy > :nth-child(2) { animation-delay: 100ms; }
+.hero-copy > :nth-child(3) { animation-delay: 200ms; }
+.hero-copy > :nth-child(4) { animation-delay: 300ms; }
+.hero-copy > :nth-child(5) { animation-delay: 400ms; }
+.premium-header { box-shadow: var(--shadow-header); }
+.brand-logo { width: 140px; height: 60px; object-fit: cover; }
+.nav-link { position: relative; }
+.nav-link::after { content: ""; position: absolute; bottom: 2px; left: 16px; right: 16px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 350ms var(--ease-premium); }
+.nav-link:hover::after, .nav-link[aria-current="page"]::after { transform: scaleX(1); }
+.premium-action { transition: transform 350ms var(--ease-premium), box-shadow 350ms var(--ease-premium), background-color 250ms; }
+.premium-action:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.category-tile { transition: transform 500ms var(--ease-premium), box-shadow 500ms var(--ease-premium); }
+.category-tile img, .product-photo { transition: transform 700ms var(--ease-premium); }
+.category-tile:hover { transform: translateY(-5px); box-shadow: var(--shadow-lift); }
+.category-tile:hover img, .product-card:hover .product-photo { transform: scale(1.045); }
+.product-card { border: 1px solid var(--border); transition: transform 400ms var(--ease-premium), box-shadow 400ms var(--ease-premium), border-color 400ms; }
+.product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); border-color: color-mix(in oklab, var(--accent) 55%, var(--border)); }
+.product-grid { animation: reveal-up 500ms var(--ease-premium) both; }
+.category-selector { transition: background-color 300ms, color 300ms, transform 300ms var(--ease-premium); }
+.category-selector:hover { transform: translateX(2px); }
+.project-upload { transition: border-color 300ms, background-color 300ms; }
+.project-upload:hover { background-color: var(--secondary); }
+.editorial-line { width: 36px; height: 2px; background: var(--accent); }
+@media (max-width: 767px) {
+  .brand-logo { width: 116px; height: 50px; }
+  .bg-hero { background-image: linear-gradient(90deg, oklch(0.13 0.003 90 / 0.92), oklch(0.13 0.003 90 / 0.58)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  [data-motion="pending"] { opacity: 1; transform: none; }
+  .premium-action:hover, .category-tile:hover, .product-card:hover, .category-selector:hover, .category-tile:hover img, .product-card:hover .product-photo { transform: none; }
+}
+
+
+/* Contact section: refined cards, map and WhatsApp actions */
+.contact-section { scroll-margin-top: 7rem; }
+.contact-card { position: relative; display: flex; align-items: center; gap: 14px; min-height: 112px; padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--shadow-card); transition: transform 420ms var(--ease-premium), box-shadow 420ms var(--ease-premium), border-color 300ms; }
+.contact-card:hover { transform: translateY(-5px) scale(1.015); box-shadow: var(--shadow-lift); border-color: color-mix(in oklab, #f59e0b 45%, var(--border)); }
+.contact-card > span:nth-child(2) { min-width: 0; }
+.contact-card small { display: block; margin-bottom: 5px; color: var(--muted-foreground); font-size: 12px; }
+.contact-card strong { display: block; font-size: 14px; font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; }
+.contact-icon { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border-radius: 13px; color: #17120a; background: linear-gradient(135deg,#fbbf24,#f97316); box-shadow: 0 6px 16px #f59e0b35; }
+.contact-icon svg { width: 20px; height: 20px; }
+.contact-arrow { width: 15px; height: 15px; margin-left: auto; color: var(--muted-foreground); opacity: .5; transition: transform 300ms, opacity 300ms; }
+.contact-card:hover .contact-arrow { opacity: 1; transform: translate(2px,-2px); }
+.contact-social { padding: 22px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); }
+.social-chip { display: inline-flex; align-items: center; gap: 9px; padding: 11px 15px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); font-size: 13px; transition: transform 300ms var(--ease-premium), border-color 300ms, box-shadow 300ms; }
+.social-chip svg { width: 18px; height: 18px; color: #f59e0b; }
+.social-chip span { color: var(--muted-foreground); }
+.social-chip:hover { transform: translateY(-3px) scale(1.03); border-color: #f59e0b; box-shadow: var(--shadow-card); }
+.contact-whatsapp { display: flex; align-items: center; gap: 14px; padding: 20px 24px; border-radius: 16px; color: #111; background: linear-gradient(115deg,#fbbf24,#f97316); box-shadow: 0 12px 28px #f59e0b30; transition: transform 350ms var(--ease-premium), box-shadow 350ms; }
+.contact-whatsapp:hover { transform: translateY(-4px) scale(1.015); box-shadow: 0 18px 38px #f59e0b45; }
+.contact-whatsapp > svg:first-child { width: 28px; height: 28px; flex: 0 0 auto; }
+.contact-whatsapp strong, .contact-whatsapp small { display: block; }
+.contact-whatsapp strong { font-size: 16px; font-weight: 800; }
+.contact-whatsapp small { margin-top: 3px; font-size: 12px; opacity: .75; }
+.contact-map-wrap { position: relative; min-height: 420px; overflow: hidden; border: 1px solid var(--border); border-radius: 22px; background: var(--muted); box-shadow: var(--shadow-lift); }
+.contact-map-wrap iframe { width: 100%; height: 100%; min-height: 420px; border: 0; filter: saturate(.88); }
+.map-open { position: absolute; right: 16px; bottom: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 999px; background: #fff; color: #171717; font-size: 13px; font-weight: 700; box-shadow: 0 8px 25px #0002; transition: transform 300ms, box-shadow 300ms; }
+.map-open svg { width: 16px; height: 16px; }
+.map-open:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 12px 30px #0003; }
+.floating-whatsapp { position: fixed; z-index: 60; right: 24px; bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 60px; height: 60px; border: 1px solid #ffffff70; border-radius: 50%; color: white; background: linear-gradient(145deg,#25d366,#0eaa50); box-shadow: 0 8px 28px #0eaa5045, inset 0 1px 0 #ffffff60; transition: width 350ms var(--ease-premium), transform 350ms var(--ease-premium), box-shadow 350ms; }
+.floating-whatsapp svg { width: 27px; height: 27px; }
+.floating-whatsapp-label { max-width: 0; overflow: hidden; white-space: nowrap; font-size: 13px; font-weight: 700; opacity: 0; transition: max-width 350ms, opacity 250ms; }
+.floating-whatsapp:hover { width: 176px; border-radius: 999px; transform: translateY(-4px); box-shadow: 0 14px 34px #0eaa5060; }
+.floating-whatsapp:hover .floating-whatsapp-label { max-width: 100px; opacity: 1; }
+@media (max-width: 640px) { .contact-map-wrap, .contact-map-wrap iframe { min-height: 330px; } .floating-whatsapp { right: 15px; bottom: 15px; width: 54px; height: 54px; } .floating-whatsapp:hover { width: 54px; } .floating-whatsapp-label { display: none; } }
+@media (prefers-reduced-motion: reduce) { .contact-card:hover, .social-chip:hover, .contact-whatsapp:hover, .map-open:hover, .floating-whatsapp:hover { transform: none; } }
+/* Consistent micro-interactions for clickable controls and image surfaces */
+button, [role="button"], .button, a[class*="btn"] { transition: transform 280ms var(--ease-premium), box-shadow 280ms var(--ease-premium), filter 280ms; }
+button:hover:not(:disabled), [role="button"]:hover, a[class*="btn"]:hover { transform: translateY(-2px) scale(1.025); }
+button:active:not(:disabled), [role="button"]:active { transform: translateY(0) scale(.985); }
+img:not(.brand-logo):not(.hero-photo) { transition: transform 600ms var(--ease-premium), filter 400ms; }
+.product-card:hover img, .category-tile:hover img, .portfolio-item:hover img, .photo-card:hover img { transform: scale(1.07); }
+
+
+/* Bitcups cinematic polish: scroll progress, staggered reveals and subtle ambient depth */
+:root { --scroll-progress: 0%; }
+body::before {
+  content: ""; position: fixed; z-index: 100; top: 0; left: 0; height: 3px;
+  width: var(--scroll-progress); pointer-events: none;
+  background: linear-gradient(90deg, #fbbf24, #f97316);
+  box-shadow: 0 0 12px #f59e0b55;
+  transition: width 80ms linear;
+}
+.page-transition { transform-origin: 50% 0; animation: cinematic-page-in 620ms var(--ease-premium) both; }
+@keyframes cinematic-page-in {
+  0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(.994); filter: blur(2px); }
+  65% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+[data-motion="pending"] { opacity: 0; transform: translate3d(0, 28px, 0) scale(.99); filter: blur(3px); }
+[data-motion="visible"] { animation: cinematic-reveal 780ms var(--ease-premium) both; animation-delay: var(--reveal-delay, 0ms); }
+@keyframes cinematic-reveal {
+  0% { opacity: 0; transform: translate3d(0, 26px, 0) scale(.985); filter: blur(3px); }
+  60% { filter: blur(0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+/* More tactile hover on visual surfaces, without changing layout dimensions. */
+.category-tile, .product-card, .contact-card, .contact-social, .contact-map-wrap,
+.project-upload, .portfolio-item, .photo-card, .feature-card, .benefit-card {
+  will-change: transform;
+  transition: transform 450ms var(--ease-premium), box-shadow 450ms var(--ease-premium), border-color 300ms, filter 300ms;
+}
+.category-tile:hover, .product-card:hover, .portfolio-item:hover, .photo-card:hover,
+.feature-card:hover, .benefit-card:hover { transform: translateY(-6px); filter: saturate(1.04); }
+.product-card:hover, .category-tile:hover { box-shadow: 0 22px 48px -24px #1113; }
+.hero-photo { transform-origin: 65% 45%; }
+.hero-copy > * { filter: drop-shadow(0 2px 12px #00000012); }
+.premium-action:focus-visible, .nav-link:focus-visible, .floating-whatsapp:focus-visible,
+.contact-whatsapp:focus-visible, .map-open:focus-visible { outline: 3px solid #f59e0b; outline-offset: 4px; }
+@media (hover: none) {
+  .category-tile:hover, .product-card:hover, .contact-card:hover, .portfolio-item:hover,
+  .photo-card:hover, .feature-card:hover, .benefit-card:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before { display: none; }
+  .page-transition, [data-motion="visible"] { animation: none !important; }
+  [data-motion="pending"] { opacity: 1; transform: none; filter: none; }
+  .category-tile:hover, .product-card:hover, .portfolio-item:hover, .photo-card:hover,
+  .feature-card:hover, .benefit-card:hover { transform: none; filter: none; }
+}
+
+
+/* Motion refinements: natural scroll parallax + gentle pointer depth */
+.hero-photo {
+  transform: translate3d(var(--hero-pointer-x, 0px), calc(var(--hero-scroll-y, 0px) + var(--hero-pointer-y, 0px)), 0) scale(1.035);
+  transition: transform 500ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+}
+.bg-premium { --hero-pointer-x: 0px; --hero-pointer-y: 0px; }
+.bg-premium .hero-copy { position: relative; z-index: 2; }
+.bg-premium::after {
+  content: ""; position: absolute; inset: -20%; pointer-events: none; z-index: 1;
+  background: radial-gradient(ellipse at 75% 45%, rgba(245, 158, 11, .10), transparent 38%);
+  animation: bitcups-ambient-drift 14s ease-in-out infinite alternate;
+}
+@keyframes bitcups-ambient-drift {
+  from { transform: translate3d(-1.5%, -1%, 0) scale(1); opacity: .45; }
+  to { transform: translate3d(1.5%, 1%, 0) scale(1.06); opacity: .9; }
+}
+/* Cards respond with a subtle lift and image zoom, not abrupt jumps. */
+.contact-card:hover, .contact-social:hover, .contact-map-wrap:hover {
+  transform: translateY(-4px); box-shadow: 0 18px 42px -24px rgba(20, 16, 8, .24);
+}
+button, a, .premium-action { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-photo, .bg-premium::after { animation: none !important; transition: none !important; transform: none !important; }
+}
+
+
+/* Motion system v6: balanced, accessible and GPU-friendly. */
+[data-motion="pending"] {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  filter: blur(2px);
+}
+[data-motion="visible"] {
+  animation: bitcups-reveal 680ms cubic-bezier(.2,.75,.25,1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes bitcups-reveal {
+  0% { opacity: 0; transform: translate3d(0,24px,0) scale(.992); filter: blur(2px); }
+  70% { filter: blur(0); }
+  100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
+}
+.product-grid > .product-card[data-motion="visible"],
+.grid > .category-tile[data-motion="visible"] { animation-duration: 620ms; }
+.product-card, .category-tile, .contact-card, .contact-social, .contact-map-wrap,
+.project-upload, .portfolio-item, .photo-card, .feature-card, .benefit-card {
+  backface-visibility: hidden;
+}
+.product-card:hover, .category-tile:hover, .contact-card:hover,
+.contact-social:hover, .portfolio-item:hover, .photo-card:hover {
+  box-shadow: 0 20px 42px -25px rgba(25, 20, 10, .32);
+}
+.product-card img, .category-tile img, .photo-card img, .portfolio-item img {
+  transform: translateZ(0);
+  transition: transform 650ms cubic-bezier(.2,.75,.25,1), filter 400ms ease;
+}
+.product-card:hover img, .category-tile:hover img, .photo-card:hover img, .portfolio-item:hover img {
+  filter: saturate(1.06);
+}
+button:not(:disabled), [role="button"], .premium-action, .contact-whatsapp, .social-chip, .map-open {
+  transition: transform 260ms cubic-bezier(.2,.75,.25,1), box-shadow 300ms ease, background-color 250ms ease, color 250ms ease, filter 250ms ease;
+}
+button:not(:disabled):active, [role="button"]:active, .premium-action:active, .contact-whatsapp:active {
+  transform: scale(.975);
+}
+.premium-action, .contact-whatsapp {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.premium-action::after, .contact-whatsapp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.24) 48%, transparent 70%);
+  transform: translateX(-130%);
+  transition: transform 700ms ease;
+}
+.premium-action:hover::after, .contact-whatsapp:hover::after { transform: translateX(130%); }
+.nav-link { transition: color 250ms ease, transform 250ms ease; }
+.nav-link:hover { transform: translateY(-1px); }
+.bg-premium::after { will-change: transform, opacity; }
+.hero-photo { will-change: transform; }
+@media (hover: hover) and (pointer: fine) {
+  .product-card:hover, .category-tile:hover { transform: translate3d(0,-5px,0) scale(1.012); }
+}
+@media (hover: none) {
+  .product-card:active, .category-tile:active, .contact-card:active { transform: scale(.99); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+  [data-motion="pending"], [data-motion="visible"] {
+    opacity: 1 !important; transform: none !important; filter: none !important;
+  }
+  .premium-action::after, .contact-whatsapp::after { display: none; }
+}
+
+/* Instagram highlight: layered gradients with composited movement only. */
+.bitcups-instagram {
+  background: linear-gradient(115deg, #5728a5, #b72c85, #f04c50, #e5a332);
+  background-size: 220% 220%;
+  animation: bitcups-instagram-gradient 16s ease-in-out infinite alternate;
+}
+.bitcups-instagram-glow {
+  position: absolute; inset: -35%; pointer-events: none;
+  background: radial-gradient(circle at 30% 50%, rgba(255,255,255,.20), transparent 35%),
+              radial-gradient(circle at 70% 45%, rgba(255,198,64,.24), transparent 38%);
+  animation: bitcups-instagram-drift 12s ease-in-out infinite alternate;
+}
+.instagram-follow { transition: transform 300ms var(--ease-premium), box-shadow 300ms ease; }
+.instagram-follow:hover { transform: translateY(-4px) scale(1.035); box-shadow: 0 18px 42px #220f4b66; }
+.instagram-follow:active { transform: scale(.975); }
+@keyframes bitcups-instagram-gradient { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+@keyframes bitcups-instagram-drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(2%, 1%, 0) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) {
+  .bitcups-instagram, .bitcups-instagram-glow { animation: none !important; }
+  .instagram-follow:hover, .instagram-follow:active { transform: none; }
+}
+
+
+/* Bitcups v7 — motion across the actual website, not only its controls. */
+.bg-premium { isolation: isolate; min-height: 420px; }
+.bg-premium .bg-hero { z-index: 0; }
+.bg-premium .hero-photo { z-index: -1; animation: bitcups-hero-breathe 13s ease-in-out infinite alternate !important; }
+.bg-premium .hero-copy { z-index: 4; }
+@keyframes bitcups-hero-breathe {
+  from { transform: translate3d(-.6%,0,0) scale(1.035); filter: saturate(1); }
+  to { transform: translate3d(.8%,-.8%,0) scale(1.085); filter: saturate(1.14); }
+}
+.bitcups-hero-aura { position:absolute; inset:-30%; z-index:1; pointer-events:none; background:radial-gradient(ellipse at 70% 48%,rgba(255,197,52,.20),transparent 32%),radial-gradient(ellipse at 18% 70%,rgba(255,156,0,.12),transparent 38%); animation:bitcups-aura-flow 10s ease-in-out infinite alternate; }
+@keyframes bitcups-aura-flow { from {transform:translate3d(-2%,1%,0) rotate(-3deg);opacity:.55} to {transform:translate3d(2%,-1%,0) rotate(3deg);opacity:1} }
+.bitcups-hero-orbit {position:absolute; z-index:2; pointer-events:none; border:1px solid rgba(255,204,80,.22); border-radius:50%; box-shadow:inset 0 0 25px rgba(255,195,62,.04),0 0 18px rgba(255,190,40,.08); }
+.bitcups-hero-orbit-one {width:clamp(260px,36vw,580px);height:clamp(260px,36vw,580px);right:-8%;top:-34%;animation:bitcups-orbit-float 12s ease-in-out infinite alternate}
+.bitcups-hero-orbit-two {width:clamp(170px,23vw,360px);height:clamp(170px,23vw,360px);right:13%;bottom:-42%;animation:bitcups-orbit-float 9s ease-in-out infinite alternate-reverse}
+@keyframes bitcups-orbit-float {from{transform:translate3d(0,0,0) rotate(-8deg) scale(.96);opacity:.38}to{transform:translate3d(-15px,20px,0) rotate(12deg) scale(1.07);opacity:.85}}
+.bitcups-hero-spark {position:absolute;z-index:3;pointer-events:none;width:7px;height:7px;border-radius:50%;background:#ffe49c;box-shadow:0 0 15px 5px rgba(255,191,52,.45);animation:bitcups-spark-drift 7s ease-in-out infinite alternate}
+.bitcups-hero-spark-one {top:23%;right:19%}.bitcups-hero-spark-two{bottom:19%;right:36%;animation-delay:-3s}
+@keyframes bitcups-spark-drift {from{transform:translate3d(-10px,16px,0) scale(.7);opacity:.25}to{transform:translate3d(15px,-24px,0) scale(1.3);opacity:.9}}
+.hero-copy h1 img {animation:bitcups-logo-hover 5s ease-in-out infinite;filter:drop-shadow(0 12px 24px rgba(0,0,0,.22))}
+@keyframes bitcups-logo-hover {0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.bitcups-collections::before {content:"";position:absolute;pointer-events:none;inset:0 -10%;z-index:-1;background:radial-gradient(circle at 85% 35%,rgba(255,195,45,.10),transparent 33%);animation:bitcups-section-breathe 9s ease-in-out infinite alternate}
+@keyframes bitcups-section-breathe {from{transform:translate3d(-1%,0,0);opacity:.35}to{transform:translate3d(1%,0,0);opacity:1}}
+.bitcups-collections h2,.bitcups-story h2,.bitcups-contact-animated h2 {text-wrap:balance}
+.bitcups-collections .category-tile {position:relative;overflow:hidden}
+.bitcups-collections .category-tile::after {content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.25) 48%,transparent 62%);transform:translateX(-140%);transition:transform .85s ease}
+.bitcups-collections .category-tile:hover::after {transform:translateX(140%)}
+.bitcups-services::before {content:"";position:absolute;inset:-70%;pointer-events:none;background:radial-gradient(circle at 45% 50%,rgba(245,158,11,.09),transparent 32%);animation:bitcups-service-wave 15s ease-in-out infinite alternate}
+@keyframes bitcups-service-wave {from{transform:translate3d(-5%,0,0) rotate(-8deg)}to{transform:translate3d(5%,0,0) rotate(8deg)}}
+.bitcups-services > div {position:relative;z-index:1}
+.bitcups-services a > svg:first-child {animation:bitcups-icon-float 4s ease-in-out infinite}
+.bitcups-services a:nth-child(2) > svg:first-child {animation-delay:-2s}
+@keyframes bitcups-icon-float {0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.bitcups-story > svg {animation:bitcups-crown-glow 5s ease-in-out infinite}
+@keyframes bitcups-crown-glow {0%,100%{transform:translateY(0) rotate(-3deg);filter:drop-shadow(0 0 0 rgba(245,158,11,0))}50%{transform:translateY(-7px) rotate(3deg);filter:drop-shadow(0 0 12px rgba(245,158,11,.48))}}
+.bitcups-instagram .relative.z-10 > svg {animation:bitcups-icon-float 4s ease-in-out infinite}
+.bitcups-contact-animated {position:relative}
+.bitcups-contact-animated::before {content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 35%,rgba(245,158,11,.075),transparent 55%);animation:bitcups-section-breathe 10s ease-in-out infinite alternate}
+/* The reveal animation must not override card hover transforms forever. */
+.product-card[data-motion="visible"],.category-tile[data-motion="visible"],.contact-card[data-motion="visible"] {animation-fill-mode:backwards}
+@media (max-width:767px) {.bitcups-hero-orbit-one{right:-35%;top:-18%}.bitcups-hero-orbit-two{right:-25%;bottom:-22%}.bitcups-hero-aura{opacity:.65}}
+@media (prefers-reduced-motion:reduce) {
+  .bg-premium .hero-photo,.bitcups-hero-aura,.bitcups-hero-orbit,.bitcups-hero-spark,.hero-copy h1 img,.bitcups-collections::before,.bitcups-services::before,.bitcups-services a > svg:first-child,.bitcups-story > svg,.bitcups-instagram .relative.z-10 > svg,.bitcups-contact-animated::before {animation:none!important;transform:none!important}
+}
