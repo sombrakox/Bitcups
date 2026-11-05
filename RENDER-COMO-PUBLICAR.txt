@@ -1,0 +1,11 @@
+BITCUPS — RENDER
+
+1. Envie TODO o conteudo desta pasta para a raiz do repositorio GitHub (inclusive src, public e server-render.mjs).
+2. Render Web Service, Node, Root Directory em branco.
+3. Build Command: npm install && npm run build
+4. Start Command: npm run start
+5. Salve e faca Deploy latest commit.
+
+O dist/server/server.js exporta um fetch handler e NAO deve ser usado diretamente como comando de inicio. server-render.mjs inicia um servidor HTTP na porta PORT do Render e serve os assets de dist/client.
+
+OBS: Este ambiente nao concluiu npm install/build; valide o deploy e envie os logs se ocorrerem erros.
