@@ -9,11 +9,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 export default defineConfig({
   plugins: [
     tsconfigPaths(),
-    tanstackStart({
-      srcDirectory: 'src',
-      router: { entry: './router.tsx' },
-      server: { entry: './server.ts' },
-    }),
+    tanstackStart(),
     viteReact(),
     tailwindcss(),
   ],
