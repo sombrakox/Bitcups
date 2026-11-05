@@ -1,0 +1,12 @@
+BITCUPS - Preparação para Render
+
+O projeto usa TanStack Start (SSR), portanto escolha Web Service, não Static Site.
+
+Root Directory: vazio (package.json na raiz do repositório)
+Build Command: npm install && npm run build
+Start Command: node .output/server/index.mjs
+Runtime: Node
+
+IMPORTANTE: Não foi possível instalar dependências/validar o build neste ambiente.
+Se a instalação e o build falharem, envie o log completo; não publique esta versão como compilação validada.
+O painel administrativo e banco de dados ainda NÃO foram implementados.
