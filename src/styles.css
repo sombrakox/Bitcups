@@ -260,18 +260,28 @@ button, a, .premium-action { -webkit-tap-highlight-color: transparent; }
 /* Motion system v6: balanced, accessible and GPU-friendly. */
 [data-motion="pending"] {
   opacity: 0;
-  transform: translate3d(0, 24px, 0);
-  filter: blur(2px);
+  transform: var(--reveal-from, translate3d(0, 24px, 0));
+  filter: blur(var(--reveal-blur, 2px));
 }
 [data-motion="visible"] {
-  animation: bitcups-reveal 680ms cubic-bezier(.2,.75,.25,1) both;
+  /* "backwards" (not "both"): after the reveal the element returns to its own styles,
+     so hover lift/zoom keeps working and no stray transform/filter stays on it. */
+  animation: bitcups-reveal 680ms cubic-bezier(.2,.75,.25,1) backwards;
   animation-delay: var(--reveal-delay, 0ms);
 }
 @keyframes bitcups-reveal {
-  0% { opacity: 0; transform: translate3d(0,24px,0) scale(.992); filter: blur(2px); }
+  0% { opacity: 0; transform: var(--reveal-from, translate3d(0,24px,0) scale(.992)); filter: blur(var(--reveal-blur, 2px)); }
   70% { filter: blur(0); }
   100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
 }
+/* Reveal variants: <section data-reveal="zoom"> etc. */
+[data-reveal="fade"] { --reveal-from: translate3d(0,0,0); }
+[data-reveal="fade-down"] { --reveal-from: translate3d(0,-24px,0); }
+[data-reveal="zoom"] { --reveal-from: scale(.94); }
+[data-reveal="slide-left"] { --reveal-from: translate3d(-44px,0,0); }
+[data-reveal="slide-right"] { --reveal-from: translate3d(44px,0,0); }
+/* Large sections skip the blur: it is costly on big layers. */
+section[data-reveal] { --reveal-blur: 0px; }
 .product-grid > .product-card[data-motion="visible"],
 .grid > .category-tile[data-motion="visible"] { animation-duration: 620ms; }
 .product-card, .category-tile, .contact-card, .contact-social, .contact-map-wrap,
@@ -391,12 +401,80 @@ button:not(:disabled):active, [role="button"]:active, .premium-action:active, .c
 @keyframes bitcups-icon-float {0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .bitcups-story > svg {animation:bitcups-crown-glow 5s ease-in-out infinite}
 @keyframes bitcups-crown-glow {0%,100%{transform:translateY(0) rotate(-3deg);filter:drop-shadow(0 0 0 rgba(245,158,11,0))}50%{transform:translateY(-7px) rotate(3deg);filter:drop-shadow(0 0 12px rgba(245,158,11,.48))}}
-.bitcups-instagram .relative.z-10 > svg {animation:bitcups-icon-float 4s ease-in-out infinite}
+.bitcups-instagram .insta-icon {animation:bitcups-icon-float 4s ease-in-out infinite}
 .bitcups-contact-animated {position:relative}
 .bitcups-contact-animated::before {content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 35%,rgba(245,158,11,.075),transparent 55%);animation:bitcups-section-breathe 10s ease-in-out infinite alternate}
 /* The reveal animation must not override card hover transforms forever. */
 .product-card[data-motion="visible"],.category-tile[data-motion="visible"],.contact-card[data-motion="visible"] {animation-fill-mode:backwards}
 @media (max-width:767px) {.bitcups-hero-orbit-one{right:-35%;top:-18%}.bitcups-hero-orbit-two{right:-25%;bottom:-22%}.bitcups-hero-aura{opacity:.65}}
 @media (prefers-reduced-motion:reduce) {
-  .bg-premium .hero-photo,.bitcups-hero-aura,.bitcups-hero-orbit,.bitcups-hero-spark,.hero-copy h1 img,.bitcups-collections::before,.bitcups-services::before,.bitcups-services a > svg:first-child,.bitcups-story > svg,.bitcups-instagram .relative.z-10 > svg,.bitcups-contact-animated::before {animation:none!important;transform:none!important}
+  .bg-premium .hero-photo,.bitcups-hero-aura,.bitcups-hero-orbit,.bitcups-hero-spark,.hero-copy h1 img,.bitcups-collections::before,.bitcups-services::before,.bitcups-services a > svg:first-child,.bitcups-story > svg,.bitcups-instagram .insta-icon,.bitcups-contact-animated::before {animation:none!important;transform:none!important}
+}
+
+
+/* Bitcups v8 — header on scroll, image skeletons, CTA glow, feedback pops, touch polish. */
+
+/* Header: slides in once, then only shadow/tint change on scroll (height never changes, so no layout shift). */
+.premium-header {
+  animation: bitcups-header-in 700ms var(--ease-premium) backwards;
+  transition: box-shadow 350ms ease, background-color 350ms ease;
+}
+.premium-header[data-scrolled="true"] {
+  box-shadow: 0 14px 34px -14px rgba(0, 0, 0, .55);
+  background-color: color-mix(in oklab, var(--premium) 98%, transparent);
+}
+@keyframes bitcups-header-in {
+  from { opacity: 0; transform: translate3d(0, -14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Image skeleton while downloading, then a soft zoom/de-blur (set by MotionSurface). */
+img[data-img="loading"] {
+  background: linear-gradient(100deg, var(--muted) 30%, color-mix(in oklab, var(--muted) 55%, #fff) 50%, var(--muted) 70%);
+  background-size: 220% 100%;
+  animation: bitcups-shimmer 1.4s linear infinite;
+}
+img[data-img="loaded"] { animation: bitcups-img-in 800ms var(--ease-premium) backwards; }
+@keyframes bitcups-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes bitcups-img-in {
+  from { transform: scale(1.06); filter: blur(8px); }
+  to { transform: scale(1); filter: blur(0); }
+}
+
+/* Idle sheen on the main call-to-action buttons (transform only, so it stays cheap). */
+.btn-glow::before, .contact-whatsapp::before, .instagram-follow::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .38) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: bitcups-sheen 4.8s ease-in-out infinite;
+}
+.contact-whatsapp::before { animation-delay: 1.6s; }
+.instagram-follow { position: relative; isolation: isolate; overflow: hidden; }
+.instagram-follow::before { background: linear-gradient(110deg, transparent 30%, rgba(183, 44, 133, .2) 50%, transparent 70%); animation-delay: .8s; }
+@keyframes bitcups-sheen {
+  0%, 55% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+/* Small "pop" confirmations: cart counter and favourite heart. */
+.cart-badge { display: inline-block; animation: bitcups-pop 420ms var(--ease-premium); }
+.heart-pop { animation: bitcups-pop 480ms var(--ease-premium); }
+@keyframes bitcups-pop {
+  0% { transform: scale(.4); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Touch screens: no "sticky" hover after a tap; give a quick press + image zoom instead. */
+@media (hover: none) {
+  button:hover:not(:disabled):not(:active), [role="button"]:hover:not(:active), a[class*="btn"]:hover:not(:active),
+  .premium-action:hover:not(:active), .contact-whatsapp:hover:not(:active), .social-chip:hover:not(:active),
+  .map-open:hover:not(:active), .instagram-follow:hover:not(:active), .nav-link:hover { transform: none; }
+  .product-card:active img, .category-tile:active img, .photo-card:active img, .portfolio-item:active img { transform: scale(1.04); }
+  .category-tile:active, .contact-whatsapp:active, .social-chip:active { transform: scale(.985); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-header, .cart-badge, .heart-pop, img[data-img] { animation: none !important; }
+  .btn-glow::before, .contact-whatsapp::before, .instagram-follow::before { animation: none !important; display: none; }
 }

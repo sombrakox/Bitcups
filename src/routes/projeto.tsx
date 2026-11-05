@@ -52,10 +52,12 @@ function Projeto() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-4xl font-extrabold">Enviar projeto</h1>
-      <p className="mt-2 text-muted-foreground">Tem uma foto ou arte? Anexe aqui e envie direto para nosso WhatsApp.</p>
+      <div data-reveal="fade-down">
+        <h1 className="text-4xl font-extrabold">Enviar projeto</h1>
+        <p className="mt-2 text-muted-foreground">Tem uma foto ou arte? Anexe aqui e envie direto para nosso WhatsApp.</p>
+      </div>
 
-      <div className="mt-8 space-y-4 rounded-lg bg-card p-5 shadow-card">
+      <div data-reveal="zoom" className="mt-8 space-y-4 rounded-lg bg-card p-5 shadow-card">
         <label className="project-upload flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-8 text-center text-muted-foreground hover:border-accent">
           <ImagePlus className="h-8 w-8" />
           <span className="font-semibold text-foreground">Toque para anexar fotos</span>
@@ -103,7 +105,7 @@ function Projeto() {
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 accent-primary" />
           <span>Concordo com o uso dos meus dados apenas para elaborar o orçamento, conforme a <Link to="/privacidade" className="font-semibold underline">política de privacidade</Link>.</span>
         </label>
-        <Button variant="whatsapp" onClick={send} disabled={!rights || !consent} className="h-auto w-full whitespace-normal px-6 py-4">
+        <Button variant="whatsapp" onClick={send} disabled={!rights || !consent} className="btn-glow h-auto w-full whitespace-normal px-6 py-4">
           <MessageCircle className="h-5 w-5" /> Enviar para o WhatsApp
         </Button>
         <p className="text-center text-xs text-muted-foreground">No celular, as fotos vão junto. No computador, anexe a foto na conversa que abrir.</p>

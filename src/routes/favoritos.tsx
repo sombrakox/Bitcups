@@ -27,11 +27,13 @@ function Favoritos() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Sua seleção</p>
-      <h1 className="mt-1 text-4xl font-extrabold">Favoritos</h1>
+      <div data-reveal="fade-down">
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Sua seleção</p>
+        <h1 className="mt-1 text-4xl font-extrabold">Favoritos</h1>
+      </div>
 
       {list.length === 0 ? (
-        <div className="mt-10 rounded-lg border bg-card p-10 text-center">
+        <div data-reveal="zoom" className="mt-10 rounded-lg border bg-card p-10 text-center">
           <Heart className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="mt-3 text-muted-foreground">Você ainda não salvou nenhum produto.</p>
           <Button asChild variant="premium" className="mt-6"><Link to="/produtos">Explorar a vitrine</Link></Button>
@@ -58,7 +60,7 @@ function Favoritos() {
             ))}
           </ul>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="whatsapp" className="h-auto flex-1 py-4">
+            <Button asChild variant="whatsapp" className="btn-glow h-auto flex-1 py-4">
               <a href={waLink(buildFavoritesMessage(ids))} target="_blank" rel="noreferrer">
                 <MessageCircle className="h-5 w-5" /> Enviar favoritos no WhatsApp ({list.length})
               </a>

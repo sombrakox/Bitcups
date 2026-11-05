@@ -28,15 +28,15 @@ function Carrinho() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-4xl font-extrabold">Carrinho</h1>
+      <h1 data-reveal="fade-down" className="text-4xl font-extrabold">Carrinho</h1>
       {rows.length === 0 ? (
-        <div className="mt-8 rounded-lg bg-card p-10 text-center shadow-card">
+        <div data-reveal="zoom" className="mt-8 rounded-lg bg-card p-10 text-center shadow-card">
           <p className="text-muted-foreground">Seu carrinho está vazio.</p>
           <Link to="/produtos" className="mt-4 inline-block rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">Ver produtos</Link>
         </div>
       ) : (
         <>
-          <ul className="mt-6 space-y-3">
+          <ul data-stagger="70" className="mt-6 space-y-3">
             {rows.map(({ p, q }) => (
               <li key={p.id} className="flex items-center gap-3 rounded-lg bg-card p-3 shadow-card">
                 <img src={p.image} alt={p.name} className="h-16 w-16 rounded-md object-cover" />
@@ -51,10 +51,10 @@ function Carrinho() {
             ))}
           </ul>
           <p className="mt-4 text-right text-sm text-muted-foreground">{count} itens · <Button variant="link" className="h-auto p-0 underline" onClick={clear}>esvaziar</Button></p>
-          <div className="mt-6 rounded-lg bg-card p-5 shadow-card">
+          <div data-reveal className="mt-6 rounded-lg bg-card p-5 shadow-card">
             <label className="text-sm font-semibold">Seu nome (opcional)</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring" />
-            <Button asChild variant="whatsapp" className="mt-4 h-auto w-full whitespace-normal py-4"><a
+            <Button asChild variant="whatsapp" className="btn-glow mt-4 h-auto w-full whitespace-normal py-4"><a
               href={waLink(buildCartMessage(items, name))}
               target="_blank"
               rel="noreferrer"

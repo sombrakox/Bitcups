@@ -40,7 +40,7 @@ function Index() {
             Canecas, térmicos, camisas e muito mais. Personalizados para marcar momentos e transformar ideias em lembranças.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="premium" className="h-12 px-6"><Link to="/produtos">
+            <Button asChild variant="premium" className="btn-glow h-12 px-6"><Link to="/produtos">
               Ver vitrine <ArrowRight className="h-4 w-4" />
             </Link></Button>
             <Button asChild variant="hero" className="h-12 px-6"><Link to="/projeto">Enviar meu projeto <Upload /></Link></Button>
@@ -50,8 +50,8 @@ function Index() {
 
       <section data-reveal className="bitcups-collections relative mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div><p className="text-xs font-semibold uppercase text-muted-foreground">Feitos para você</p><h2 className="mt-2 text-3xl font-bold md:text-4xl">Explore as coleções</h2></div>
-          <Button asChild variant="link" className="px-0"><Link to="/produtos">Ver todos os produtos <ArrowUpRight /></Link></Button>
+          <div data-reveal="slide-left"><p className="text-xs font-semibold uppercase text-muted-foreground">Feitos para você</p><h2 className="mt-2 text-3xl font-bold md:text-4xl">Explore as coleções</h2></div>
+          <Button asChild variant="link" className="px-0" data-reveal="slide-right"><Link to="/produtos">Ver todos os produtos <ArrowUpRight /></Link></Button>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {categories.map((c) => (
@@ -68,8 +68,8 @@ function Index() {
         </div>
       </section>
 
-      <section data-reveal className="bitcups-services relative overflow-hidden border-y bg-secondary">
-       <div className="mx-auto grid max-w-7xl md:grid-cols-2">
+      <section data-reveal="fade" className="bitcups-services relative overflow-hidden border-y bg-secondary">
+       <div data-stagger="140" className="mx-auto grid max-w-7xl md:grid-cols-2">
         <Link to="/carrinho" className="group px-5 py-10 transition-colors hover:bg-muted md:px-8 md:py-14">
           <ShoppingCart className="h-8 w-8 text-accent" />
           <h3 className="mt-4 text-2xl font-bold">Monte seu orçamento</h3>
@@ -85,7 +85,7 @@ function Index() {
        </div>
       </section>
 
-      <section data-reveal className="bitcups-story relative mx-auto max-w-3xl px-5 pb-2 pt-16 text-center md:pt-20">
+      <section data-reveal="zoom" className="bitcups-story relative mx-auto max-w-3xl px-5 pb-2 pt-16 text-center md:pt-20">
         <Crown className="mx-auto h-9 w-9 text-muted-foreground" strokeWidth={1.25} />
         <p className="mt-5 text-xs font-semibold uppercase text-muted-foreground">Nossa essência</p>
         <h2 className="mt-3 text-3xl font-bold md:text-4xl">Cada detalhe tem uma história.</h2>
@@ -94,10 +94,11 @@ function Index() {
         </p>
       </section>
 
-      <section data-reveal className="bitcups-instagram relative isolate overflow-hidden px-5 py-16 text-center text-white md:py-24" aria-labelledby="instagram-heading">
+      {/* No data-reveal on the section itself: its background already animates, so only the content enters, one piece at a time. */}
+      <section className="bitcups-instagram relative isolate overflow-hidden px-5 py-16 text-center text-white md:py-24" aria-labelledby="instagram-heading">
         <div className="bitcups-instagram-glow" aria-hidden="true" />
-        <div className="relative z-10 mx-auto max-w-3xl">
-          <Instagram className="mx-auto h-11 w-11" aria-hidden="true" />
+        <div data-stagger="110" className="relative z-10 mx-auto max-w-3xl">
+          <div className="mx-auto w-fit"><Instagram className="insta-icon h-11 w-11" aria-hidden="true" /></div>
           <p className="mt-5 text-xs font-bold uppercase tracking-[0.25em] text-white/80">Novidades e inspirações</p>
           <h2 id="instagram-heading" className="mt-3 text-3xl font-extrabold md:text-5xl">Sua próxima ideia começa aqui.</h2>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-white/85 md:text-base">Acompanhe nossas criações, novidades e produtos personalizados no Instagram.</p>
@@ -106,7 +107,7 @@ function Index() {
       </section>
 
       <section id="contato" data-reveal className="bitcups-contact-animated contact-section mx-auto max-w-7xl scroll-mt-28 px-5 py-16 md:px-8 md:py-20">
-        <div className="mx-auto mb-10 max-w-2xl text-center">
+        <div data-reveal="fade-down" className="mx-auto mb-10 max-w-2xl text-center">
           <p className="inline-flex rounded-full bg-accent/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground">Fale com a Bitcups</p>
           <h2 className="mt-4 text-3xl font-bold md:text-5xl">Vamos tirar sua ideia <span className="text-orange-500">do papel?</span></h2>
           <p className="mt-4 text-muted-foreground">Solicite um orçamento ou tire suas dúvidas. Estamos prontos para atender você.</p>
@@ -124,9 +125,9 @@ function Index() {
                 <a className="social-chip" href="https://facebook.com/Bitcups" target="_blank" rel="noreferrer"><Facebook /> Facebook <span>Bitcups</span></a>
               </div>
             </div>
-            <a className="contact-whatsapp sm:col-span-2" href="https://wa.me/5571982602013?text=Olá%2C%20vim%20pelo%20site%20da%20Bitcups%20e%20gostaria%20de%20um%20orçamento." target="_blank" rel="noreferrer"><MessageCircle /> <span><strong>Chamar no WhatsApp</strong><small>Converse com nossa equipe e solicite seu orçamento</small></span><ArrowRight className="ml-auto" /></a>
+            <a data-reveal="zoom" className="contact-whatsapp sm:col-span-2" href="https://wa.me/5571982602013?text=Olá%2C%20vim%20pelo%20site%20da%20Bitcups%20e%20gostaria%20de%20um%20orçamento." target="_blank" rel="noreferrer"><MessageCircle /> <span><strong>Chamar no WhatsApp</strong><small>Converse com nossa equipe e solicite seu orçamento</small></span><ArrowRight className="ml-auto" /></a>
           </div>
-          <div className="contact-map-wrap">
+          <div data-reveal="slide-right" className="contact-map-wrap">
             <iframe title="Localização da Bitcups no Google Maps" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=40310-595%2C%20Caixa%20D%27Agua%2C%20Salvador%2C%20BA&t=&z=15&ie=UTF8&iwloc=&output=embed" />
             <a className="map-open" href="https://www.google.com/maps/search/?api=1&query=40310-595%2C+Caixa+D%27Agua%2C+Salvador%2C+BA" target="_blank" rel="noreferrer"><MapPin /> Abrir no Google Maps <ExternalLink /></a>
           </div>

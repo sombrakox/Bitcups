@@ -4,7 +4,73 @@ import { useLocation } from "@tanstack/react-router";
 /**
  * Progressive, lightweight motion layer. Uses native IntersectionObserver/CSS
  * instead of a runtime animation dependency, keeping the catalog fast.
+ *
+ * Page-level API (all optional, plain HTML attributes):
+ *  - data-reveal="up|fade|fade-down|zoom|slide-left|slide-right"  reveal on scroll
+ *  - data-stagger[="<ms>"]  every direct child reveals in sequence (default 65ms)
+ *  - images inside the surface get a skeleton + fade/zoom-in while they load
  */
+const REVEAL_SELECTORS = [
+  "[data-reveal]",
+  "[data-stagger] > *",
+  ".product-card",
+  ".category-tile",
+  ".contact-card",
+  ".contact-social",
+  ".contact-map-wrap",
+  ".project-upload",
+  ".portfolio-item",
+  ".photo-card",
+  ".feature-card",
+  ".benefit-card",
+].join(",");
+
+const GROUP_SELECTOR = ".product-grid, .grid, .category-grid, .contact-grid";
+const DEFAULT_STEP_MS = 65;
+const MAX_STEPS = 7;
+
+const groupOf = (element: HTMLElement): HTMLElement | null => {
+  const parent = element.parentElement;
+  if (parent?.hasAttribute("data-stagger")) return parent;
+  return parent?.closest<HTMLElement>(GROUP_SELECTOR) ?? null;
+};
+
+/** Gives each element of a batch a --reveal-delay based on its position in its group. */
+function applyStagger(batch: HTMLElement[]) {
+  const counters = new Map<HTMLElement, number>();
+  batch.forEach((element) => {
+    // Do not overwrite a custom reveal delay set by the page.
+    if (element.style.getPropertyValue("--reveal-delay")) return;
+    const group = groupOf(element);
+    if (!group) {
+      element.style.setProperty("--reveal-delay", "0ms");
+      return;
+    }
+    const index = counters.get(group) ?? 0;
+    counters.set(group, index + 1);
+    const step = Number(group.dataset.stagger) || DEFAULT_STEP_MS;
+    element.style.setProperty("--reveal-delay", `${Math.min(index, MAX_STEPS) * step}ms`);
+  });
+}
+
+/**
+ * Skeleton + soft reveal for images that are still downloading. Images that are
+ * already complete (SSR/cache) are left alone so nothing flashes on hydration.
+ */
+function prepareImage(img: HTMLImageElement) {
+  if (img.dataset.img || img.complete) return;
+  if (img.classList.contains("hero-photo") || img.closest(".hero-copy")) return;
+  img.dataset.img = "loading";
+  const done = () => { img.dataset.img = "loaded"; };
+  img.addEventListener("load", done, { once: true });
+  img.addEventListener("error", done, { once: true });
+}
+
+function scanImages(root: HTMLElement) {
+  if (root instanceof HTMLImageElement) prepareImage(root);
+  root.querySelectorAll<HTMLImageElement>("img").forEach(prepareImage);
+}
+
 export function MotionSurface({ children }: { children: ReactNode }) {
   const path = useLocation({ select: (location) => location.pathname });
   const ref = useRef<HTMLDivElement>(null);
@@ -14,44 +80,8 @@ export function MotionSurface({ children }: { children: ReactNode }) {
     if (!surface) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const selectors = [
-      "[data-reveal]",
-      ".product-card",
-      ".category-tile",
-      ".contact-card",
-      ".contact-social",
-      ".contact-map-wrap",
-      ".project-upload",
-      ".portfolio-item",
-      ".photo-card",
-      ".feature-card",
-      ".benefit-card",
-    ].join(",");
-
-    const targets = Array.from(surface.querySelectorAll<HTMLElement>(selectors));
-    const groups = new Map<Element, HTMLElement[]>();
-
-    targets.forEach((element) => {
-      // Do not overwrite a custom reveal delay set by the page.
-      if (!element.style.getPropertyValue("--reveal-delay")) {
-        const parent = element.closest(".product-grid, .grid, .category-grid, .contact-grid");
-        if (parent) {
-          const siblings = groups.get(parent) ?? [];
-          siblings.push(element);
-          groups.set(parent, siblings);
-        } else {
-          element.style.setProperty("--reveal-delay", "0ms");
-        }
-      }
-    });
-
-    groups.forEach((items) => {
-      items.forEach((element, index) => {
-        if (!element.style.getPropertyValue("--reveal-delay")) {
-          element.style.setProperty("--reveal-delay", `${Math.min(index, 7) * 65}ms`);
-        }
-      });
-    });
+    const targets = Array.from(surface.querySelectorAll<HTMLElement>(REVEAL_SELECTORS));
+    applyStagger(targets);
 
     if (reduceMotion || !("IntersectionObserver" in window)) {
       targets.forEach((element) => element.setAttribute("data-motion", "visible"));
@@ -76,14 +106,20 @@ export function MotionSurface({ children }: { children: ReactNode }) {
       }
     };
     targets.forEach(register);
-    // Product filtering and pagination insert cards after initial mount.
+    scanImages(surface);
+
+    // Product filtering, "Ver mais" and late client data insert nodes after mount.
     const mutationObserver = new MutationObserver((records) => {
       for (const record of records) {
+        const batch: HTMLElement[] = [];
         record.addedNodes.forEach((node) => {
           if (!(node instanceof HTMLElement)) return;
-          if (node.matches(selectors)) register(node);
-          node.querySelectorAll<HTMLElement>(selectors).forEach(register);
+          if (node.matches(REVEAL_SELECTORS)) batch.push(node);
+          node.querySelectorAll<HTMLElement>(REVEAL_SELECTORS).forEach((element) => batch.push(element));
+          scanImages(node);
         });
+        applyStagger(batch);
+        batch.forEach(register);
       }
     });
     mutationObserver.observe(surface, { childList: true, subtree: true });

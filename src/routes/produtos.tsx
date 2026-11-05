@@ -60,11 +60,13 @@ function Produtos() {
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-8 md:px-4 md:py-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Vitrine Bitcups</p>
-      <h1 className="mt-1 text-3xl font-extrabold md:text-5xl">Nossos produtos</h1>
+      <div data-reveal="fade-down">
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Vitrine Bitcups</p>
+        <h1 className="mt-1 text-3xl font-extrabold md:text-5xl">Nossos produtos</h1>
+      </div>
 
       <div className="mt-6 flex gap-3 md:gap-8">
-        <aside className="w-[108px] shrink-0 md:w-64">
+        <aside data-reveal="slide-left" className="w-[108px] shrink-0 md:w-64">
           <nav className="sticky top-[120px] max-h-[calc(100vh-140px)] overflow-y-auto rounded-lg bg-premium p-1.5 text-premium-foreground shadow-card md:top-[92px] md:p-3">
             <p className="hidden px-3 pb-3 pt-1 text-xs font-semibold uppercase tracking-widest opacity-60 md:block">Categorias</p>
             <ul className="space-y-1">
@@ -184,7 +186,7 @@ function ProductCard({ p, onZoom }: { p: Product; onZoom: () => void }) {
         onClick={() => { fav.toggle(p.id); if (!liked) toast.success("Salvo nos favoritos"); }}
         className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-background/90 hover:bg-background"
       >
-        <Heart className={`h-4 w-4 ${liked ? "fill-destructive text-destructive" : ""}`} />
+        <Heart key={String(liked)} className={`h-4 w-4 ${liked ? "heart-pop fill-destructive text-destructive" : ""}`} />
       </Button>
       <Button variant="ghost" onClick={onZoom} className="group relative block h-auto overflow-hidden rounded-none bg-muted p-0 hover:bg-muted" aria-label={`Ampliar ${p.name}`}>
         <img src={p.image} alt={p.name} loading="lazy" className="product-photo aspect-square w-full object-cover" />

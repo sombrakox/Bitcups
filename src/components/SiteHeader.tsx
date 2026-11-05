@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ShoppingCart } from "lucide-react";
 import logo from "@/assets/logo-bitcups.png";
@@ -12,10 +13,28 @@ const nav = [
   { to: "/favoritos", label: "Favoritos" },
 ] as const;
 
+/** True once the page has been scrolled a little; throttled to one update per frame. */
+function useScrolled(threshold = 12) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => { frame = 0; setScrolled(window.scrollY > threshold); };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [threshold]);
+  return scrolled;
+}
+
 export function SiteHeader() {
   const { count } = useCart();
+  const scrolled = useScrolled();
   return (
-    <header className="premium-header sticky top-0 z-40 border-b border-primary-foreground/10 bg-premium/95 text-premium-foreground backdrop-blur-xl">
+    <header data-scrolled={scrolled} className="premium-header sticky top-0 z-40 border-b border-primary-foreground/10 bg-premium/95 text-premium-foreground backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-2 md:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="Bitcups" className="brand-logo" />
@@ -39,7 +58,7 @@ export function SiteHeader() {
           <ShoppingCart className="h-4 w-4" />
           Carrinho
           {count > 0 && (
-              <span className="rounded-full bg-primary px-2 text-xs text-primary-foreground">{count}</span>
+              <span key={count} className="cart-badge rounded-full bg-primary px-2 text-xs text-primary-foreground">{count}</span>
           )}
         </Link></Button>
       </div>
