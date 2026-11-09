@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { waLink } from "@/lib/catalog";
 import {
-  PREVIEW_H, PREVIEW_W, PRODUCTS, artBox, drawArt, effectiveDpi, fitLayout, getProduct, luminance, qualityOf,
+  PRODUCTS, artBox, drawArt, effectiveDpi, fitLayout, getProduct, loadPhotos, luminance, previewSize, qualityOf,
   renderFlat, renderPreview, visibleFraction,
   type ArtLayout, type ProductId, type ProductSpec,
 } from "@/lib/mockup";
@@ -274,12 +274,16 @@ export function ArtStudio() {
   const [consent, setConsent] = useState(false);
   const previewRef = useRef<HTMLCanvasElement>(null);
   const urlRef = useRef<string | null>(null);
+  // Sobe quando as fotos reais terminam de carregar, para redesenhar a prévia.
+  const [photoTick, setPhotoTick] = useState(0);
 
   const product = getProduct(productId);
+  const pSize = previewSize(productId);
   const swatch = product.swatches.find((s) => s.id === swatches[productId]) ?? product.swatches[0]!;
   const setLayout = useCallback((fn: (l: ArtLayout) => ArtLayout) => setLayoutState(fn), []);
 
   useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
+  useEffect(() => { let alive = true; loadPhotos().then(() => { if (alive) setPhotoTick((t) => t + 1); }); return () => { alive = false; }; }, []);
 
   // Prévia ao vivo
   useEffect(() => {
@@ -291,7 +295,7 @@ export function ArtStudio() {
       renderPreview(ctx, productId, swatch.color, renderFlat(art?.img ?? null, layout, product));
     });
     return () => cancelAnimationFrame(frame);
-  }, [productId, swatch.color, art, layout, product]);
+  }, [productId, swatch.color, art, layout, product, photoTick]);
 
   function loadFile(file: File) {
     if (!ACCEPTED.test(file.type) || file.size > MAX_BYTES) {
@@ -390,7 +394,7 @@ export function ArtStudio() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
         <section data-reveal="zoom" className="lg:sticky lg:top-28 lg:self-start" aria-label="Prévia">
           <div className="relative overflow-hidden rounded-xl border bg-card shadow-card">
-            <canvas ref={previewRef} width={PREVIEW_W} height={PREVIEW_H} className="block h-auto w-full" role="img"
+            <canvas ref={previewRef} width={pSize.w} height={pSize.h} style={{ aspectRatio: `${pSize.w} / ${pSize.h}` }} className="block h-auto w-full" role="img"
               aria-label={`Prévia de ${product.name} com a sua arte`} />
             {!art && (
               <p className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-sm font-medium text-foreground/60">Envie sua arte para vê-la aqui</p>

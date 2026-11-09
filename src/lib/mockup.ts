@@ -696,13 +696,212 @@ function drawShirt(ctx: CanvasRenderingContext2D, product: ProductSpec, color: s
 }
 
 /* ------------------------------------------------------------------ */
+/* Fotos reais (base das prévias)                                      */
+/* ------------------------------------------------------------------ */
+
+interface PhotoAsset {
+  w: number;
+  h: number;
+  base: ImageData;
+  /** Máscara 0–255 do que pode ser recolorido (camisa inteira / alça e interior da caneca). */
+  mask: Uint8ClampedArray;
+  /** Luminância de cada pixel. */
+  lum: Float32Array;
+  /** Referência de "branco iluminado" no corpo e na região recolorível. */
+  lrefBody: number;
+  lrefMask: number;
+  tinted: Map<string, ImageData>;
+}
+
+const photos: Partial<Record<ProductId, PhotoAsset>> = {};
+let photosPromise: Promise<void> | null = null;
+
+export const hasPhoto = (id: ProductId): boolean => !!photos[id];
+
+/** Tamanho (px) da prévia: o da foto quando existe, senão o do desenho. */
+export function previewSize(id: ProductId): { w: number; h: number } {
+  const a = photos[id];
+  return a ? { w: a.w, h: a.h } : { w: PREVIEW_W, h: PREVIEW_H };
+}
+
+const loadImage = (url: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Falha ao carregar ${url}`));
+    img.src = url;
+  });
+
+function pixels(img: HTMLImageElement): ImageData {
+  const [, g] = makeCanvas(img.naturalWidth, img.naturalHeight);
+  g.drawImage(img, 0, 0);
+  return g.getImageData(0, 0, img.naturalWidth, img.naturalHeight);
+}
+
+function percentile(values: number[], q: number): number {
+  if (!values.length) return 255;
+  values.sort((a, b) => a - b);
+  return values[Math.min(values.length - 1, Math.floor(values.length * q))]!;
+}
+
+async function buildAsset(photoUrl: string, maskUrl: string, body: { x0: number; y0: number; x1: number; y1: number } | null): Promise<PhotoAsset> {
+  const [photo, maskImg] = await Promise.all([loadImage(photoUrl), loadImage(maskUrl)]);
+  const base = pixels(photo);
+  const maskPx = pixels(maskImg);
+  const w = base.width;
+  const h = base.height;
+  const mask = new Uint8ClampedArray(w * h);
+  const lum = new Float32Array(w * h);
+  const bodyVals: number[] = [];
+  const maskVals: number[] = [];
+  for (let y = 0, p = 0; y < h; y++) {
+    for (let x = 0; x < w; x++, p++) {
+      const i = p * 4;
+      lum[p] = 0.299 * base.data[i]! + 0.587 * base.data[i + 1]! + 0.114 * base.data[i + 2]!;
+      mask[p] = maskPx.data[i]!;
+      if ((x + y) % 5 === 0) {
+        if (mask[p]! > 200) maskVals.push(lum[p]!);
+        if (body && x >= body.x0 && x < body.x1 && y >= body.y0 && y < body.y1) bodyVals.push(lum[p]!);
+      }
+    }
+  }
+  const lrefMask = percentile(maskVals, 0.95);
+  return { w, h, base, mask, lum, lrefMask, lrefBody: body ? percentile(bodyVals, 0.95) : lrefMask, tinted: new Map() };
+}
+
+/** Carrega as fotos de /mockups. Se alguma falhar, o produto continua com o desenho. */
+export function loadPhotos(baseUrl = "/mockups/"): Promise<void> {
+  photosPromise ??= (async () => {
+    const jobs: Array<[ProductId, () => Promise<PhotoAsset>]> = [
+      ["porcelana", () => buildAsset(`${baseUrl}caneca-porcelana.jpg`, `${baseUrl}caneca-porcelana-mask.png`, { x0: 262, y0: 300, x1: 586, y1: 650 })],
+      ["camisa", () => buildAsset(`${baseUrl}camisa.jpg`, `${baseUrl}camisa-mask.png`, null)],
+    ];
+    await Promise.all(jobs.map(async ([id, make]) => {
+      try { photos[id] = await make(); } catch { /* usa o desenho como reserva */ }
+    }));
+  })();
+  return photosPromise;
+}
+
+/** Recolore a região da máscara mantendo as luzes e dobras da foto (cache por cor). */
+function recolored(a: PhotoAsset, hex: string, k: number, spec: number): ImageData {
+  const key = `${hex}|${k}|${spec}`;
+  const cached = a.tinted.get(key);
+  if (cached) return cached;
+  const [cr, cg, cb] = hexToRgb(hex);
+  const out = new ImageData(new Uint8ClampedArray(a.base.data), a.w, a.h);
+  const d = out.data;
+  for (let p = 0, i = 0; p < a.w * a.h; p++, i += 4) {
+    const m = a.mask[p]! / 255;
+    if (m < 0.004) continue;
+    const ratio = a.lum[p]! / a.lrefMask;
+    const f = Math.min(1.12, Math.max(0.15, 1 + (ratio - 1) * k));
+    const hi = Math.max(0, ratio - 0.97) * spec * 255;
+    d[i] = d[i]! * (1 - m) + Math.min(255, cr * f + hi) * m;
+    d[i + 1] = d[i + 1]! * (1 - m) + Math.min(255, cg * f + hi) * m;
+    d[i + 2] = d[i + 2]! * (1 - m) + Math.min(255, cb * f + hi) * m;
+  }
+  a.tinted.set(key, out);
+  return out;
+}
+
+let scratch: HTMLCanvasElement | null = null;
+function scratchCanvas(w: number, h: number): CanvasRenderingContext2D {
+  if (!scratch) scratch = document.createElement("canvas");
+  if (scratch.width !== w || scratch.height !== h) { scratch.width = w; scratch.height = h; } else scratch.getContext("2d")!.clearRect(0, 0, w, h);
+  return scratch.getContext("2d", { willReadFrequently: true })!;
+}
+
+/** Aplica a arte sobre a foto usando a luz da própria foto (sombras escurecem, brilhos clareiam). */
+function blendArt(out: ImageData, art: ImageData, ox: number, oy: number, a: PhotoAsset, k: number, spec: number) {
+  const d = out.data;
+  const s = art.data;
+  for (let y = 0; y < art.height; y++) {
+    for (let x = 0; x < art.width; x++) {
+      const si = (y * art.width + x) * 4;
+      const al = s[si + 3]! / 255;
+      if (al < 0.004) continue;
+      const p = (oy + y) * a.w + (ox + x);
+      const ratio = a.lum[p]! / a.lrefBody;
+      const f = 1 + (ratio - 1) * k;
+      const hi = Math.max(0, ratio - 1) * spec * 255;
+      const i = p * 4;
+      d[i] = d[i]! * (1 - al) + Math.min(255, s[si]! * f + hi) * al;
+      d[i + 1] = d[i + 1]! * (1 - al) + Math.min(255, s[si + 1]! * f + hi) * al;
+      d[i + 2] = d[i + 2]! * (1 - al) + Math.min(255, s[si + 2]! * f + hi) * al;
+    }
+  }
+}
+
+/** Geometria da caneca da foto (medida nas bordas da imagem). */
+const MUG_PHOTO = { cx: 423.75, R: 166.25, topC: 264, topRy: 19, botC: 644, botRy: 48, v0: 0.0525, v1: 0.9475 };
+
+function wrapArtPhoto(ctx: CanvasRenderingContext2D, flat: HTMLCanvasElement, product: ProductSpec) {
+  const g = MUG_PHOTO;
+  const half = product.area.w / (product.diameter ?? 8);
+  const x0 = Math.round(g.cx - g.R);
+  const cols = Math.round(g.R * 2);
+  ctx.imageSmoothingQuality = "high";
+  for (let i = 0; i < cols; i++) {
+    const a1 = Math.asin(Math.max(-1, Math.min(1, (i / cols) * 2 - 1)));
+    const a2 = Math.asin(Math.max(-1, Math.min(1, ((i + 1) / cols) * 2 - 1)));
+    const t1 = (a1 + half) / (2 * half);
+    const t2 = (a2 + half) / (2 * half);
+    if (t2 <= 0 || t1 >= 1) continue;
+    const sx = Math.max(0, t1) * flat.width;
+    const sw = Math.max(0.5, (Math.min(1, t2) - Math.max(0, t1)) * flat.width);
+    const c = Math.cos((a1 + a2) / 2);
+    const yT = g.topC + g.topRy * c;
+    const yB = g.botC + g.botRy * c;
+    const y0 = yT + g.v0 * (yB - yT);
+    const y1 = yT + g.v1 * (yB - yT);
+    ctx.drawImage(flat, sx, 0, sw, flat.height, x0 + i, y0, 1, y1 - y0);
+  }
+}
+
+/** Área de impressão na foto da camisa (px da foto). */
+export function shirtPhotoArea(product: ProductSpec) {
+  const upc = 11.4; // px por cm (corpo da camisa ≈ 570 px para ~50 cm)
+  const w = product.area.w * upc;
+  return { x: 615 - w / 2, y: 335, w, h: product.area.h * upc };
+}
+
+function drawPhoto(ctx: CanvasRenderingContext2D, id: ProductId, product: ProductSpec, color: string, flat: HTMLCanvasElement) {
+  const a = photos[id]!;
+  let base = a.base;
+  if (id === "porcelana" && color.toLowerCase() !== "#ffffff") base = recolored(a, color, 1.5, 0.9);
+  if (id === "camisa" && luminance(color) < 0.93) base = recolored(a, color, luminance(color) < 0.45 ? 2.6 : 1.7, 0);
+  const out = new ImageData(new Uint8ClampedArray(base.data), a.w, a.h);
+
+  const layer = scratchCanvas(a.w, a.h);
+  let rx: number, ry: number, rw: number, rh: number;
+  if (id === "porcelana") {
+    wrapArtPhoto(layer, flat, product);
+    rx = 255; ry = 270; rw = 340; rh = 440;
+  } else {
+    const r = shirtPhotoArea(product);
+    layer.imageSmoothingQuality = "high";
+    layer.drawImage(flat, r.x, r.y, r.w, r.h);
+    rx = Math.max(0, Math.floor(r.x)); ry = Math.max(0, Math.floor(r.y));
+    rw = Math.min(a.w - rx, Math.ceil(r.w) + 1); rh = Math.min(a.h - ry, Math.ceil(r.h) + 1);
+  }
+  const art = layer.getImageData(rx, ry, rw, rh);
+  blendArt(out, art, rx, ry, a, id === "porcelana" ? 0.55 : 1.7, id === "porcelana" ? 1.1 : 0);
+  ctx.putImageData(out, 0, 0);
+}
+
+/* ------------------------------------------------------------------ */
 /* API                                                                 */
 /* ------------------------------------------------------------------ */
 
-/** Desenha a prévia completa (PREVIEW_W × PREVIEW_H) a partir da arte plana. */
+/** Desenha a prévia completa a partir da arte plana (tamanho: previewSize). */
 export function renderPreview(ctx: CanvasRenderingContext2D, productId: ProductId, color: string, flat: HTMLCanvasElement) {
   const product = getProduct(productId);
-  ctx.clearRect(0, 0, PREVIEW_W, PREVIEW_H);
+  const size = previewSize(productId);
+  const canvas = ctx.canvas;
+  if (canvas.width !== size.w || canvas.height !== size.h) { canvas.width = size.w; canvas.height = size.h; }
+  ctx.clearRect(0, 0, size.w, size.h);
+  if (photos[productId]) { drawPhoto(ctx, productId, product, color, flat); return; }
   if (productId === "porcelana") drawPorcelain(ctx, product, color, flat);
   else if (productId === "aluminio") drawAluminum(ctx, product, color, flat);
   else drawShirt(ctx, product, color, flat);
