@@ -94,3 +94,36 @@ export async function handleAuthApi(req,res,pathname){if(!pathname.startsWith('/
  const candidate=Buffer.from(await passwordHash(password,parts[1]),'hex'),expected=Buffer.from(parts[2],'hex');if(candidate.length!==expected.length||!timingSafeEqual(candidate,expected))return json(res,401,{error:'Credenciais inválidas'}),true;
  if(pathname==='/api/auth/login') await clearLimit('login-account',email);const token=randomBytes(32).toString('hex');await db().execute('INSERT INTO auth_sessions (token_hash,user_id,expires_at) VALUES (?,?,DATE_ADD(NOW(), INTERVAL 7 DAY))',[hashToken(token),user.id]);return json(res,200,{user:{id:user.id,name:user.name,email:user.email,role:user.role}},{'set-cookie':setCookie(res,token,req)}),true;
  }catch(e){console.error('Auth API error:',e.message);return json(res,500,{error:'Falha ao processar solicitação'}),true;}}
+
+
+// Diagnóstico temporário, executado uma vez no boot. Remover após análise.
+async function diagnosticarConexaoBitcups() {
+  const keys = ['DB_HOST', 'DB_PORT', 'DB_USER', 'DB_NAME', 'DB_PASSWORD'];
+  console.log('[BITCUPS-DB-DIAG] inicio', {
+    variaveisPresentes: Object.fromEntries(keys.map(k => [k, Boolean(process.env[k])])),
+    host: process.env.DB_HOST || '(ausente)',
+    porta: process.env.DB_PORT || '(padrao 3306)',
+    usuario: process.env.DB_USER || '(ausente)',
+    banco: process.env.DB_NAME || '(ausente)',
+    senhaComEspacosNasPontas: process.env.DB_PASSWORD ? process.env.DB_PASSWORD !== process.env.DB_PASSWORD.trim() : null,
+    caCarregado: true
+  });
+  let conn;
+  try {
+    conn = await db().getConnection();
+    const [status] = await conn.query("SHOW SESSION STATUS LIKE 'Ssl_cipher'");
+    await conn.query('SELECT 1');
+    console.log('[BITCUPS-DB-DIAG] SUCESSO', { tlsAtivo: Boolean(status[0]?.Value) });
+  } catch (e) {
+    console.error('[BITCUPS-DB-DIAG] FALHA', {
+      codigo: e.code || null,
+      numero: e.errno || null,
+      sqlState: e.sqlState || null,
+      // Mensagem do driver pode incluir dados sensiveis; nao imprimir.
+      tipo: e.name || 'Error'
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+}
+void diagnosticarConexaoBitcups();
