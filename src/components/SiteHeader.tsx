@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useAuthSession } from "@/lib/auth-session";
 import { Link } from "@tanstack/react-router";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, UserRound, ShieldCheck, LayoutDashboard } from "lucide-react";
 import logo from "@/assets/logo-bitcups.png";
 import { useCart } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,10 @@ function useScrolled(threshold = 12) {
 export function SiteHeader() {
   const { count } = useCart();
   const scrolled = useScrolled();
+  const { status, user } = useAuthSession();
+  // Unknown or temporarily unavailable sessions open the account page,
+  // which checks authentication without accidentally presenting login.
+  const signedIn = status !== 'guest';
   return (
     <header data-scrolled={scrolled} className="premium-header sticky top-0 z-40 border-b border-primary-foreground/10 bg-premium/95 text-premium-foreground backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-2 md:px-8">
@@ -45,14 +50,18 @@ export function SiteHeader() {
               key={n.to}
               to={n.to}
               activeOptions={{ exact: true }}
-              className="nav-link px-4 py-3 text-sm font-medium text-premium-foreground/70 transition hover:text-premium-foreground"
+              className="nav-link relative rounded-xl border border-transparent px-4 py-3 text-sm font-semibold tracking-wide text-premium-foreground/75 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#c7a65b]/35 hover:bg-[#c7a65b]/10 hover:text-[#e8c46d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d5b768]"
               activeProps={{ className: "text-premium-foreground" }}
             >
               {n.label}
             </Link>
           ))}
         </nav>
-        <Button asChild variant="premium" className="ml-auto h-10 rounded-md px-4 md:ml-0"><Link
+        <Link to={user?.role==='admin'?'/admin':'/admin/login'} className="hidden items-center gap-1.5 rounded-xl border border-[#c7a65b]/40 px-3 py-2 text-xs font-bold text-[#e8c46d] transition hover:bg-[#c7a65b]/15 md:inline-flex">{user?.role==='admin'?<LayoutDashboard size={16}/>:<ShieldCheck size={16}/>} {user?.role==='admin'?'Painel administrativo':'Admin'}</Link>
+        <Link to={signedIn ? "/conta" : "/login"} aria-label={signedIn ? "Minha conta" : "Entrar"} className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 text-sm font-bold text-premium-foreground transition hover:bg-primary hover:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:ml-0 md:px-4">
+          <UserRound className="h-4 w-4" /> <span className="hidden sm:inline">{signedIn ? "Minha conta" : "Entrar"}</span><span className="sm:hidden">{signedIn ? "Conta" : "Entrar"}</span>
+        </Link>
+        <Button asChild variant="premium" className="h-10 rounded-md px-3 sm:px-4"><Link
           to="/carrinho"
         >
           <ShoppingCart className="h-4 w-4" />
@@ -74,12 +83,15 @@ export function SiteHeader() {
             {n.label}
           </Link>
         ))}
+        <Link to={user?.role==='admin'?'/admin':'/admin/login'} className="nav-link flex shrink-0 items-center gap-1 rounded-lg border border-[#c7a65b]/40 px-3 py-2 text-xs font-bold text-[#e8c46d]"><ShieldCheck size={14}/>{user?.role==='admin'?'Painel':'Admin'}</Link>
       </nav>
     </header>
   );
 }
 
 export function SiteFooter() {
+  const { status } = useAuthSession();
+  const signedIn = status !== 'guest';
   return (
     <footer className="mt-20 border-t border-primary-foreground/10 bg-premium text-premium-foreground">
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 text-sm md:grid-cols-3 md:px-8">
@@ -95,7 +107,9 @@ export function SiteFooter() {
         <div className="space-y-1">
           <a className="block underline-offset-4 hover:underline" href="https://instagram.com/debitcups" target="_blank" rel="noreferrer">Instagram @debitcups</a>
           <a className="block underline-offset-4 hover:underline" href="https://facebook.com/Bitcups" target="_blank" rel="noreferrer">Facebook</a>
-          <Link to="/privacidade" className="block underline-offset-4 hover:underline">Privacidade e termos de uso</Link>
+          <Link to="/privacidade" className="block underline-offset-4 hover:underline">Privacidade</Link>
+          <Link to="/termos" className="block underline-offset-4 hover:underline">Termos de Uso</Link>
+          <Link to={signedIn ? "/conta" : "/login"} className="block underline-offset-4 hover:underline">Minha conta</Link>
         </div>
       </div>
     </footer>

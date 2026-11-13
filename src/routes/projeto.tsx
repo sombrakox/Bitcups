@@ -9,7 +9,7 @@ export const Route = createFileRoute("/projeto")({
   head: () => ({
     meta: [
       { title: "Enviar projeto — Bitcups" },
-      { name: "description", content: "Anexe a foto da sua arte ou ideia e envie direto para o WhatsApp da Bitcups." },
+      { name: "description", content: "Anexe sua arte e envie diretamente para o painel administrativo da Bitcups." },
       { property: "og:title", content: "Envie seu projeto — Bitcups" },
       { property: "og:description", content: "Mande sua arte e receba um orçamento." },
       { property: "og:type", content: "website" },
@@ -27,6 +27,7 @@ function Projeto() {
   const [desc, setDesc] = useState("");
   const [rights, setRights] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [busy,setBusy]=useState(false);
 
   const message = [
     "Olá, Bitcups! Quero enviar um projeto:",
@@ -38,36 +39,34 @@ function Projeto() {
   ].filter(Boolean).join("\n");
 
   async function send() {
-    if (files.length && typeof navigator !== "undefined" && navigator.canShare?.({ files })) {
-      try {
-        await navigator.share({ files, text: message });
-        return;
-      } catch (e) {
-        if ((e as Error).name === "AbortError") return;
-      }
-    }
-    window.open(waLink(message), "_blank");
-    if (files.length) toast.info("Anexe a foto na conversa do WhatsApp que abriu.");
+    if(!name.trim()||!product||!qty||!desc.trim()||!rights||!consent){toast.error('Preencha todos os campos e confirme as autorizações.');return}
+    setBusy(true);
+    try {
+      const r=await fetch('/api/store/projects',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({name,product,quantity:Number(qty),description:desc,rights,consent})});
+      const data=await r.json();if(!r.ok)throw Error(data.error||'Falha ao enviar projeto');
+      for(const file of files){const uploaded=await fetch(`/api/store/projects/${data.id}/file`,{method:'POST',credentials:'same-origin',headers:{'content-type':file.type,'x-file-name':encodeURIComponent(file.name)},body:file});if(!uploaded.ok){const err=await uploaded.json();throw Error(`Projeto #${data.id} criado, mas uma imagem falhou: ${err.error||'erro'}`)}}
+      toast.success(`Projeto #${data.id} enviado ao painel administrativo!`);setFiles([]);setName('');setProduct('');setQty('');setDesc('');setRights(false);setConsent(false);
+    }catch(err){toast.error(err instanceof Error?err.message:'Falha no envio. Entre na sua conta e tente novamente.')}finally{setBusy(false)}
   }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <div data-reveal="fade-down">
         <h1 className="text-4xl font-extrabold">Enviar projeto</h1>
-        <p className="mt-2 text-muted-foreground">Tem uma foto ou arte? Anexe aqui e envie direto para nosso WhatsApp.</p>
+        <p className="mt-2 text-muted-foreground">Tem uma foto ou arte? Envie diretamente para nossa equipe. É necessário entrar na sua conta.</p>
       </div>
 
       <div data-reveal="zoom" className="mt-8 space-y-4 rounded-lg bg-card p-5 shadow-card">
         <label className="project-upload flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-8 text-center text-muted-foreground hover:border-accent">
           <ImagePlus className="h-8 w-8" />
           <span className="font-semibold text-foreground">Toque para anexar fotos</span>
-          <span className="text-xs">JPG, PNG ou PDF</span>
+          <span className="text-xs">JPG, PNG, WebP ou PDF (até 8 MB cada; máximo 5 arquivos)</span>
           <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple className="hidden"
             onChange={(e) => {
               const picked = Array.from(e.target.files ?? []);
-              const ok = picked.filter((f) => /^(image\/(jpeg|png|webp)|application\/pdf)$/.test(f.type) && f.size <= 25 * 1024 * 1024);
-              if (ok.length < picked.length) toast.error("Alguns arquivos foram ignorados: use JPG, PNG, WEBP ou PDF de até 25 MB.");
-              setFiles([...files, ...ok].slice(0, 10));
+              const ok = picked.filter((f) => /^(image\/(jpeg|png|webp)|application\/pdf)$/.test(f.type) && f.size <= 8 * 1024 * 1024);
+              if (ok.length < picked.length) toast.error("Alguns arquivos foram ignorados: use JPG, PNG, WEBP ou PDF de até 8 MB.");
+              setFiles([...files, ...ok].slice(0, 5));
             }} />
         </label>
         {files.length > 0 && (
@@ -105,10 +104,10 @@ function Projeto() {
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 accent-primary" />
           <span>Concordo com o uso dos meus dados apenas para elaborar o orçamento, conforme a <Link to="/privacidade" className="font-semibold underline">política de privacidade</Link>.</span>
         </label>
-        <Button variant="whatsapp" onClick={send} disabled={!rights || !consent} className="btn-glow h-auto w-full whitespace-normal px-6 py-4">
-          <MessageCircle className="h-5 w-5" /> Enviar para o WhatsApp
+        <Button variant="whatsapp" onClick={send} disabled={!rights || !consent || busy} className="btn-glow h-auto w-full whitespace-normal px-6 py-4">
+          <MessageCircle className="h-5 w-5" /> {busy ? "Enviando..." : "Enviar ao painel administrativo"}
         </Button>
-        <p className="text-center text-xs text-muted-foreground">No celular, as fotos vão junto. No computador, anexe a foto na conversa que abrir.</p>
+        <p className="text-center text-xs text-muted-foreground">Sua solicitação será registrada no painel administrativo, com os arquivos anexados.</p>
       </div>
     </div>
   );

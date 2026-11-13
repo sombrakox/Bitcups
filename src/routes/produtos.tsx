@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { categories, countOf, productLabel, type Product } from "@/lib/catalog";
+import { categories, countOf, productLabel, useManagedProducts, type Product } from "@/lib/catalog";
 import { useCart } from "@/lib/cart";
 import { useExpandedPanel } from "@/lib/accordion";
 
@@ -34,8 +34,18 @@ const PAGE = 24;
 
 function Produtos() {
   const { cat, sub } = Route.useSearch();
+  const managed = useManagedProducts();
+  const visibleCategories = useMemo(() => {
+    const known = new Set(managed.map(p => p.image));
+    const mapped = categories.map(c => ({...c, subs: c.subs.map(s => ({...s, products: [
+      ...s.products.filter(p => !known.has(p.image)),
+      ...managed.filter(p => p.category === `${c.id}/${s.id}`),
+    ]}))}));
+    const unmatched = managed.filter(p => !categories.some(c => c.subs.some(s => p.category === `${c.id}/${s.id}`)));
+    return unmatched.length ? [...mapped, {id:'novidades',name:'Novidades',cover:unmatched[0].image,subs:[{id:'novidades-todas',name:'Outros produtos',products:unmatched}]}] : mapped;
+  }, [managed]);
   const navigate = Route.useNavigate();
-  const active = categories.find((c) => c.id === cat) ?? categories[0];
+  const active = visibleCategories.find((c) => c.id === cat) ?? visibleCategories[0];
   const activeSub = active?.subs.find((s) => s.id === sub);
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(PAGE);
@@ -70,7 +80,7 @@ function Produtos() {
           <nav className="sticky top-[120px] max-h-[calc(100vh-140px)] overflow-y-auto rounded-lg bg-premium p-1.5 text-premium-foreground shadow-card md:top-[92px] md:p-3">
             <p className="hidden px-3 pb-3 pt-1 text-xs font-semibold uppercase tracking-widest opacity-60 md:block">Categorias</p>
             <ul className="space-y-1">
-              {categories.map((c) => {
+              {visibleCategories.map((c) => {
                 const on = c.id === active.id;
                 const open = openId === c.id;
                 return (

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { Minus, Plus, Trash2, MessageCircle } from "lucide-react";
-import { allProducts, productLabel, waLink } from "@/lib/catalog";
+import { allProducts, useManagedProducts, productLabel, waLink } from "@/lib/catalog";
 import { buildCartMessage, useCart } from "@/lib/cart";
 
 export const Route = createFileRoute("/carrinho")({
@@ -21,10 +22,34 @@ export const Route = createFileRoute("/carrinho")({
 
 function Carrinho() {
   const { items, setQty, clear, count } = useCart();
+  const managed = useManagedProducts();
+  const catalog = useMemo(() => [...allProducts, ...managed], [managed]);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
   const rows = Object.entries(items)
-    .map(([id, q]) => ({ p: allProducts.find((x) => x.id === id), q }))
+    .map(([id, q]) => ({ p: catalog.find((x) => x.id === id), q }))
     .filter((r): r is { p: (typeof allProducts)[number]; q: number } => Boolean(r.p));
+
+  async function finishOrder() {
+    if (busy) return;
+    if (!name.trim() || !/^\+?[0-9 ()-]{8,25}$/.test(phone.trim()) || !privacy) {
+      toast.error("Informe nome, telefone e aceite a política de privacidade."); return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/store/quote', {method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({name:name.trim(),phone:phone.trim(),items:rows.map(({p,q})=>({id:p.id,name:productLabel(p),quantity:q}))})});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Não foi possível registrar o pedido');
+      const message = `${buildCartMessage(items, name)}\nTelefone: ${phone.trim()}\nNúmero do pedido: #${result.orderId}\nAguardando confirmação pelo WhatsApp.`;
+      const link = waLink(message);
+      const opened = window.open(link,'_blank','noopener,noreferrer');
+      if (!opened) { window.location.href = link; }
+      toast.success(`Pedido #${result.orderId} registrado. Envie a mensagem no WhatsApp para confirmar.`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Erro ao registrar pedido'); }
+    finally {setBusy(false);}
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -52,16 +77,15 @@ function Carrinho() {
           </ul>
           <p className="mt-4 text-right text-sm text-muted-foreground">{count} itens · <Button variant="link" className="h-auto p-0 underline" onClick={clear}>esvaziar</Button></p>
           <div data-reveal className="mt-6 rounded-lg bg-card p-5 shadow-card">
-            <label className="text-sm font-semibold">Seu nome (opcional)</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring" />
-            <Button asChild variant="whatsapp" className="btn-glow mt-4 h-auto w-full whitespace-normal py-4"><a
-              href={waLink(buildCartMessage(items, name))}
-              target="_blank"
-              rel="noreferrer"
-              
-            >
-              <MessageCircle className="h-5 w-5" /> Enviar orçamento no WhatsApp
-            </a></Button>
+            <label className="text-sm font-semibold" htmlFor="checkout-name">Seu nome</label>
+            <input id="checkout-name" required maxLength={160} value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring" />
+            <label className="mt-3 block text-sm font-semibold" htmlFor="checkout-phone">WhatsApp para contato</label>
+            <input id="checkout-phone" required type="tel" maxLength={25} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(71) 99999-9999" className="mt-2 w-full rounded-md border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring" />
+            <label className="mt-3 flex items-start gap-2 text-xs"><input type="checkbox" checked={privacy} onChange={e=>setPrivacy(e.target.checked)} /> Autorizo o uso dos dados para atendimento deste orçamento, conforme a <Link to="/privacidade" className="underline">Política de Privacidade</Link>.</label>
+            <Button type="button" disabled={busy || !privacy} onClick={finishOrder} variant="whatsapp" className="btn-glow mt-4 h-auto w-full whitespace-normal py-4">
+              <MessageCircle className="h-5 w-5" /> {busy ? 'Registrando pedido...' : 'Registrar pedido e continuar no WhatsApp'}
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">O pedido será registrado como aguardando confirmação. O envio da mensagem pelo WhatsApp deve ser concluído por você.</p>
           </div>
         </>
       )}

@@ -1,3 +1,4 @@
+import * as React from "react";
 import mugs from "@/assets/product-mugs.png";
 import polymer from "@/assets/product-polymer-mug.png";
 import keychains from "@/assets/product-keychains.png";
@@ -10,7 +11,7 @@ import vitrine from "@/data/vitrine.json";
 
 export const WHATSAPP_NUMBER = "5571982602013";
 
-export type Product = { id: string; code?: string; name: string; description?: string; image: string };
+export type Product = { id: string; code?: string; name: string; description?: string; image: string; category?: string };
 export type SubTopic = { id: string; name: string; products: Product[] };
 export type Category = { id: string; name: string; cover: string; subs: SubTopic[] };
 
@@ -53,4 +54,21 @@ export const productLabel = (p: Product) => (p.code ? `#${p.code} ${p.name}` : p
 
 export function waLink(text: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+
+// Produtos administrados no MySQL são adicionados à vitrine no cliente.
+export function useManagedProducts() {
+  const [products, setProducts] = React.useState<Product[]>([]);
+  React.useEffect(() => {
+    let active = true;
+    fetch('/api/store/products', { credentials: 'same-origin' })
+      .then(r => { if (!r.ok) throw new Error('Catálogo indisponível'); return r.json(); })
+      .then(data => { if (active && Array.isArray(data.products)) setProducts(data.products.map((p: any) => ({
+        id: `db-${p.id}`, name: String(p.name), description: String(p.description || ''),
+        image: String(p.image_path || '/favicon.png'), category: String(p.category || ''),
+      }))); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+  return products;
 }

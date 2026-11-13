@@ -15,6 +15,7 @@ import { MessageCircle } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/lib/cart";
+import { AuthProvider } from "@/lib/auth-session";
 import { FavoritesProvider } from "@/lib/favorites";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { Toaster } from "@/components/ui/sonner";
@@ -233,6 +234,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
       <CartProvider>
         <FavoritesProvider>
           <SiteHeader />
@@ -262,6 +264,7 @@ function RootComponent() {
           <Toaster position="top-center" />
         </FavoritesProvider>
       </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

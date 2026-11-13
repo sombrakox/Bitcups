@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { allProducts, productLabel } from "./catalog";
 
 type Items = Record<string, number>;
@@ -31,6 +31,8 @@ export function buildCartMessage(items: Items, name?: string) {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Items>({});
+  const ready = useRef(false);
+  const signedIn = useRef(false);
 
   useEffect(() => {
     try {
@@ -39,6 +41,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    let stopped=false;
+    const sync=async()=>{
+      try{
+        const me=await fetch('/api/auth/me',{credentials:'same-origin'}).then(r=>r.json());
+        if(stopped||!me.user){signedIn.current=false;ready.current=true;return;}
+        const remote=await fetch('/api/saved/cart',{credentials:'same-origin'}).then(r=>r.ok?r.json():null);
+        if(stopped||!remote)return;
+        const local:Items=JSON.parse(localStorage.getItem(KEY)||'{}');
+        const merged:Items={...remote.items,...local};
+        signedIn.current=true;ready.current=true;setItems(merged);localStorage.setItem(KEY,JSON.stringify(merged));
+        await fetch('/api/saved/cart',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({items:merged})});
+      }catch{ready.current=true;}
+    };sync();return()=>{stopped=true};
+  },[]);
+  useEffect(()=>{
+    if(!ready.current||!signedIn.current)return;
+    const timer=setTimeout(()=>{fetch('/api/saved/cart',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({items})}).catch(()=>{});},500);
+    return()=>clearTimeout(timer);
+  },[items]);
   const save = (next: Items) => {
     setItems(next);
     localStorage.setItem(KEY, JSON.stringify(next));

@@ -1,6 +1,9 @@
 // Bitcups Render Node HTTP entrypoint for TanStack Start's Vite SSR output.
 // The compiled dist/server/server.js exports a fetch handler, not a listener.
 import http from 'node:http';
+import { handleAuthApi } from './auth-api.mjs';
+import { handleStoreApi } from './store-api.mjs';
+import { handleSavedApi } from './saved-api.mjs';
 import { Readable } from 'node:stream';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
@@ -17,6 +20,19 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || '/', origin);
     const pathname = decodeURIComponent(url.pathname);
     if (pathname.includes('\0')) { res.writeHead(400).end(); return; }
+    if (await handleAuthApi(req, res, pathname)) return;
+    if (await handleStoreApi(req, res, pathname)) return;
+    if (await handleSavedApi(req, res, pathname)) return;
+    if ((req.method === 'GET' || req.method === 'HEAD') && /^\/uploads\/products\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(pathname)) {
+      const file = resolve(process.env.UPLOAD_DIR || resolve(process.cwd(), 'uploads'), pathname.slice('/uploads/'.length));
+      const uploadRoot = resolve(process.env.UPLOAD_DIR || resolve(process.cwd(), 'uploads'), 'products') + sep;
+      if (!file.startsWith(uploadRoot)) { res.writeHead(403).end(); return; }
+      try { const info = await stat(file); if (!info.isFile()) throw Object.assign(new Error('Not found'), {code:'ENOENT'});
+        const bytes = await readFile(file);
+        res.writeHead(200, {'content-type':types[extname(file).toLowerCase()]||'application/octet-stream','content-length':bytes.length,'x-content-type-options':'nosniff','cache-control':'public, max-age=86400'});
+        if (req.method === 'HEAD') res.end(); else res.end(bytes); return;
+      } catch(e) { if(e.code==='ENOENT') {res.writeHead(404).end();return;} throw e; }
+    }
     // Vite client assets and public assets are emitted into dist/client.
     const file = resolve(root, '.' + pathname);
     if (file.startsWith(root.endsWith(sep) ? root : root + sep) && pathname !== '/') {
@@ -41,6 +57,7 @@ const server = http.createServer(async (req, res) => {
     const request = new Request(target, { method, headers, ...(method === 'GET' || method === 'HEAD' ? {} : { body: Readable.toWeb(req), duplex: 'half' }) });
     const response = await app.fetch(request, {}, {});
     const outHeaders = Object.fromEntries(response.headers.entries());
+    outHeaders['referrer-policy'] = 'no-referrer';
     res.writeHead(response.status, outHeaders);
     if (method === 'HEAD' || !response.body) { res.end(); return; }
     Readable.fromWeb(response.body).on('error', (err) => { console.error('Response stream error:', err); res.destroy(err); }).pipe(res);

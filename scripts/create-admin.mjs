@@ -1,0 +1,5 @@
+import { createPool } from 'mysql2/promise';
+import { randomBytes,scryptSync } from 'node:crypto';
+import { createInterface } from 'node:readline/promises';
+const rl=createInterface({input:process.stdin,output:process.stdout});
+try{const email=(await rl.question('E-mail do administrador: ')).trim().toLowerCase();const name=(await rl.question('Nome: ')).trim();const password=await rl.question('Senha forte (mínimo 12 caracteres; entrada visível): ');if(!/^\S+@\S+\.\S+$/.test(email)||name.length<2||password.length<12)throw Error('Dados inválidos');const salt=randomBytes(16).toString('hex');const hash=scryptSync(password,salt,64).toString('hex');const pool=createPool({host:process.env.DB_HOST,port:Number(process.env.DB_PORT||3306),user:process.env.DB_USER,password:process.env.DB_PASSWORD,database:process.env.DB_NAME});await pool.execute("INSERT INTO users(name,email,password_hash,role) VALUES(?,?,?,'admin') ON DUPLICATE KEY UPDATE role='admin',password_hash=VALUES(password_hash)",[name,email,`scrypt:${salt}:${hash}`]);await pool.end();console.log('Administrador configurado.');}catch(e){console.error(e.message);process.exitCode=1}finally{rl.close()}
