@@ -24,7 +24,7 @@ function sameOrigin(req){
  try { const u=new URL(origin); const host=req.headers['x-forwarded-host']||req.headers.host; return u.host===host && ['http:','https:'].includes(u.protocol); }catch{return false;}
 }
 
-export function db() { if (!pool) { for (const k of ['DB_HOST','DB_USER','DB_NAME','DB_PASSWORD']) if (!process.env[k]) throw new Error(`Configure ${k} no ambiente`); pool=createPool({host:process.env.DB_HOST,port:Number(process.env.DB_PORT||3306),user:process.env.DB_USER,password:process.env.DB_PASSWORD,database:process.env.DB_NAME,connectionLimit:5}); } return pool; }
+export function db() { if (!pool) { for (const k of ['DB_HOST','DB_USER','DB_NAME','DB_PASSWORD']) if (!process.env[k]) throw new Error(`Configure ${k} no ambiente`); pool=createPool({host:process.env.DB_HOST,port:Number(process.env.DB_PORT||3306),user:process.env.DB_USER,password:process.env.DB_PASSWORD,database:process.env.DB_NAME,ssl:{minVersion:'TLSv1.2',rejectUnauthorized:true},connectionLimit:5}); } return pool; }
 const hashToken=t=>createHash('sha256').update(t).digest('hex');
 export const json=(res,status,obj,extra={})=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...extra});res.end(JSON.stringify(obj));};
 export async function body(req){let bytes=0;const parts=[];for await(const part of req){bytes+=part.length;if(bytes>12000)throw new Error('Requisição muito grande');parts.push(part);}return JSON.parse(Buffer.concat(parts).toString('utf8'));}
