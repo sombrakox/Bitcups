@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { allProducts, productLabel } from "./catalog";
+import { useAuthSession } from "./auth-session";
 
 type Ctx = { ids: string[]; has: (id: string) => boolean; toggle: (id: string) => void; clear: () => void };
 const FavContext = createContext<Ctx | null>(null);
@@ -14,43 +15,55 @@ export function buildFavoritesMessage(ids: string[]) {
 }
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
+  const { user, status } = useAuthSession();
   const [ids, setIds] = useState<string[]>([]);
-  const ready=useRef(false);
-  const signedIn=useRef(false);
+  const [loadedFor, setLoadedFor] = useState<number | null>(null);
+  const generation = useRef(0);
+  const idsRef = useRef<string[]>([]);
+  const writeQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const activeUserId = status === 'authenticated' ? user?.id ?? null : null;
+
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setIds(JSON.parse(raw));
-    } catch {}
-  }, []);
-  useEffect(()=>{
-    let stopped=false;
-    const sync=async()=>{
-      try{
-        const me=await fetch('/api/auth/me',{credentials:'same-origin'}).then(r=>r.json());
-        if(stopped||!me.user){ready.current=true;signedIn.current=false;return;}
-        const remote=await fetch('/api/saved/favorites',{credentials:'same-origin'}).then(r=>r.ok?r.json():null);
-        if(stopped||!remote)return;
-        const local:string[]=JSON.parse(localStorage.getItem(KEY)||'[]');
-        const merged=[...new Set([...remote.ids,...local])];
-        signedIn.current=true;ready.current=true;setIds(merged);localStorage.setItem(KEY,JSON.stringify(merged));
-        await fetch('/api/saved/favorites',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({ids:merged})});
-      }catch{ready.current=true;}
-    };sync();return()=>{stopped=true};
-  },[]);
-  useEffect(()=>{
-    if(!ready.current||!signedIn.current)return;
-    const timer=setTimeout(()=>{fetch('/api/saved/favorites',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({ids})}).catch(()=>{});},500);
-    return()=>clearTimeout(timer);
-  },[ids]);
+    const current = ++generation.current;
+    idsRef.current = [];
+    setIds([]);
+    setLoadedFor(null);
+    if (activeUserId === null) return;
+    void (async () => {
+      try {
+        const response = await fetch('/api/saved/favorites', { credentials: 'same-origin', cache: 'no-store' });
+        if (!response.ok) throw new Error('Falha ao carregar favoritos');
+        const data = await response.json();
+        if (current !== generation.current) return;
+        const next: string[] = Array.isArray(data.ids) ? data.ids : [];
+        idsRef.current = next;
+        setIds(next);
+        setLoadedFor(activeUserId);
+      } catch (error) {
+        if (current === generation.current) console.error('Favoritos: não foi possível carregar os dados', error);
+      }
+    })();
+  }, [activeUserId]);
+
   const save = (next: string[]) => {
+    if (activeUserId === null || loadedFor !== activeUserId) return;
+    idsRef.current = next;
     setIds(next);
-    localStorage.setItem(KEY, JSON.stringify(next));
+    const snapshot = [...next];
+    writeQueue.current = writeQueue.current.catch(() => {}).then(async () => {
+      const response = await fetch('/api/saved/favorites', {
+        method: 'PUT', credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ids: snapshot }),
+      });
+      if (!response.ok) throw new Error('Falha ao salvar favoritos');
+    }).catch(error => console.error(error));
   };
+
   const value: Ctx = {
     ids,
     has: (id) => ids.includes(id),
-    toggle: (id) => save(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]),
+    toggle: (id) => save(idsRef.current.includes(id) ? idsRef.current.filter((x) => x !== id) : [...idsRef.current, id]),
     clear: () => save([]),
   };
   return <FavContext.Provider value={value}>{children}</FavContext.Provider>;

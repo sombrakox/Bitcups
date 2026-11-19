@@ -80,50 +80,40 @@ export async function handleAuthApi(req,res,pathname){if(!pathname.startsWith('/
    await conn.commit();return json(res,200,{message:'Senha redefinida. Faça login novamente.'}),true;
   }catch(e){await conn.rollback();throw e;}finally{conn.release();}
  }
- if(!['/api/auth/register','/api/auth/login'].includes(pathname)||req.method!=='POST')return json(res,404,{error:'Não encontrado'}),true;
- const ip=clientIp(req);if(await rateLimited('login-ip',ip,20))return json(res,429,{error:'Muitas tentativas. Aguarde 15 minutos.'},{'retry-after':'900'}),true;
- const input=await body(req);const email=String(input.email||'').trim().toLowerCase(),password=String(input.password||'');if(email.length>254||!/^\S+@\S+\.\S+$/.test(email)||password.length<12||password.length>128)return json(res,400,{error:'Informe e-mail válido e senha de 12 a 128 caracteres'}),true;
- if(pathname==='/api/auth/login' && await rateLimited('login-account',email,8))return json(res,429,{error:'Muitas tentativas para esta conta. Aguarde 15 minutos.'},{'retry-after':'900'}),true;
+ if(!['/api/auth/register','/api/auth/login','/api/auth/admin/login'].includes(pathname)||req.method!=='POST')return json(res,404,{error:'Não encontrado'}),true;
+ const isAdminLogin=pathname==='/api/auth/admin/login';
+ const isCustomerLogin=pathname==='/api/auth/login';
+ const ip=clientIp(req);
+ if(await rateLimited('login-ip',ip,20))return json(res,429,{error:'Muitas tentativas. Aguarde 15 minutos.'},{'retry-after':'900'}),true;
+ const input=await body(req);
+ const email=String(input.email||'').trim().toLowerCase();
+ const username=String(input.username||'').trim();
+ const password=String(input.password||'');
+ if(password.length<12||password.length>128)return json(res,400,{error:'Credenciais inválidas'}),true;
+ if(isAdminLogin){
+  if(!/^[a-zA-Z0-9_.-]{3,60}$/.test(username))return json(res,401,{error:'Credenciais inválidas'}),true;
+ }else if(email.length>254||!/^\S+@\S+\.\S+$/.test(email))return json(res,400,{error:'Informe e-mail válido'}),true;
+ const accountKey=isAdminLogin?'admin:'+username.toLowerCase():'customer:'+email;
+ if((isAdminLogin||isCustomerLogin)&&await rateLimited('login-account',accountKey,8))return json(res,429,{error:'Muitas tentativas para esta conta. Aguarde 15 minutos.'},{'retry-after':'900'}),true;
  if(pathname==='/api/auth/register'){
   if(input.acceptTerms!==true)return json(res,400,{error:'É necessário aceitar os Termos de Uso e a Política de Privacidade'}),true;
   const name=String(input.name||'').trim();if(name.length<2||name.length>160)return json(res,400,{error:'Informe um nome válido'}),true;
-  const salt=randomBytes(16).toString('hex');const hashed=await passwordHash(password,salt);try{await db().execute('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)',[name,email,`scrypt:${salt}:${hashed}`,'customer']);}catch(e){if(e.code==='ER_DUP_ENTRY')return json(res,409,{error:'E-mail já cadastrado'}),true;throw e;}
+  const salt=randomBytes(16).toString('hex');const hashed=await passwordHash(password,salt);
+  try{await db().execute('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)',[name,email,`scrypt:${salt}:${hashed}`,'customer']);}
+  catch(e){if(e.code==='ER_DUP_ENTRY')return json(res,409,{error:'E-mail já cadastrado'}),true;throw e;}
  }
- const [rows]=await db().execute('SELECT id,name,email,role,password_hash FROM users WHERE email=? LIMIT 1',[email]);const user=rows[0];if(!user)return json(res,401,{error:'Credenciais inválidas'}),true;
- const parts=user.password_hash.split(':');if(parts.length!==3||parts[0]!=='scrypt')return json(res,401,{error:'Conta requer atualização de senha'}),true;
- const candidate=Buffer.from(await passwordHash(password,parts[1]),'hex'),expected=Buffer.from(parts[2],'hex');if(candidate.length!==expected.length||!timingSafeEqual(candidate,expected))return json(res,401,{error:'Credenciais inválidas'}),true;
- if(pathname==='/api/auth/login') await clearLimit('login-account',email);const token=randomBytes(32).toString('hex');await db().execute('INSERT INTO auth_sessions (token_hash,user_id,expires_at) VALUES (?,?,DATE_ADD(NOW(), INTERVAL 7 DAY))',[hashToken(token),user.id]);return json(res,200,{user:{id:user.id,name:user.name,email:user.email,role:user.role}},{'set-cookie':setCookie(res,token,req)}),true;
+ const [rows]=isAdminLogin
+  ? await db().execute("SELECT id,name,email,role,password_hash FROM users WHERE username=? AND role='admin' LIMIT 1",[username])
+  : await db().execute("SELECT id,name,email,role,password_hash FROM users WHERE email=? AND role='customer' LIMIT 1",[email]);
+ const user=rows[0];
+ if(!user)return json(res,401,{error:'Credenciais inválidas'}),true;
+ const parts=String(user.password_hash).split(':');
+ if(parts.length!==3||parts[0]!=='scrypt'||!/^[a-f0-9]{32}$/.test(parts[1])||!/^[a-f0-9]{128}$/.test(parts[2]))return json(res,401,{error:'Credenciais inválidas'}),true;
+ const candidate=Buffer.from(await passwordHash(password,parts[1]),'hex');
+ const expected=Buffer.from(parts[2],'hex');
+ if(candidate.length!==expected.length||!timingSafeEqual(candidate,expected))return json(res,401,{error:'Credenciais inválidas'}),true;
+ if(isAdminLogin||isCustomerLogin)await clearLimit('login-account',accountKey);
+ const token=randomBytes(32).toString('hex');
+ await db().execute('INSERT INTO auth_sessions (token_hash,user_id,expires_at) VALUES (?,?,DATE_ADD(NOW(), INTERVAL 7 DAY))',[hashToken(token),user.id]);
+ return json(res,200,{user:{id:user.id,name:user.name,email:user.email,role:user.role}},{'set-cookie':setCookie(res,token,req)}),true;
  }catch(e){console.error('Auth API error:',e.message);return json(res,500,{error:'Falha ao processar solicitação'}),true;}}
-
-
-// Diagnóstico temporário, executado uma vez no boot. Remover após análise.
-async function diagnosticarConexaoBitcups() {
-  const keys = ['DB_HOST', 'DB_PORT', 'DB_USER', 'DB_NAME', 'DB_PASSWORD'];
-  console.log('[BITCUPS-DB-DIAG] inicio', {
-    variaveisPresentes: Object.fromEntries(keys.map(k => [k, Boolean(process.env[k])])),
-    host: process.env.DB_HOST || '(ausente)',
-    porta: process.env.DB_PORT || '(padrao 3306)',
-    usuario: process.env.DB_USER || '(ausente)',
-    banco: process.env.DB_NAME || '(ausente)',
-    senhaComEspacosNasPontas: process.env.DB_PASSWORD ? process.env.DB_PASSWORD !== process.env.DB_PASSWORD.trim() : null,
-    caCarregado: true
-  });
-  let conn;
-  try {
-    conn = await db().getConnection();
-    const [status] = await conn.query("SHOW SESSION STATUS LIKE 'Ssl_cipher'");
-    await conn.query('SELECT 1');
-    console.log('[BITCUPS-DB-DIAG] SUCESSO', { tlsAtivo: Boolean(status[0]?.Value) });
-  } catch (e) {
-    console.error('[BITCUPS-DB-DIAG] FALHA', {
-      codigo: e.code || null,
-      numero: e.errno || null,
-      sqlState: e.sqlState || null,
-      // Mensagem do driver pode incluir dados sensiveis; nao imprimir.
-      tipo: e.name || 'Error'
-    });
-  } finally {
-    if (conn) conn.release();
-  }
-}
-void diagnosticarConexaoBitcups();
