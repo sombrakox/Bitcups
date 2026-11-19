@@ -10,6 +10,18 @@ const money=(n:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency
 const field='mt-2 w-full rounded-xl border border-[#e1dbd0] bg-white px-4 py-3 text-sm text-[#25221c] outline-none focus:border-[#b89445]';
 async function api(url:string,options?:RequestInit){const r=await fetch(url,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...options?.headers}});const d=await r.json();if(!r.ok)throw Error(d.error||'Erro na solicitação');return d;}
 function Admin(){const [access,setAccess]=useState<'loading'|'denied'|'allowed'>('loading');const [adminUsername,setAdminUsername]=useState('');const [adminPassword,setAdminPassword]=useState('');const [adminBusy,setAdminBusy]=useState(false);const [adminError,setAdminError]=useState('');const [tab,setTab]=useState<'overview'|'products'|'orders'|'projects'|'recovery'>('overview');const [products,setProducts]=useState<Product[]>([]);const [orders,setOrders]=useState<Order[]>([]);const [form,setForm]=useState({...blank});const [edit,setEdit]=useState<number|null>(null);const [editing,setEditing]=useState(false);const [error,setError]=useState('');const [success,setSuccess]=useState('');const [search,setSearch]=useState('');const [uploading,setUploading]=useState(false);const [saving,setSaving]=useState(false);const [projects,setProjects]=useState<any[]>([]);const [categoryFilter,setCategoryFilter]=useState('');const [importBusy,setImportBusy]=useState(false);const [recoveryEmail,setRecoveryEmail]=useState('');const [verified,setVerified]=useState(false);const [recoveryLink,setRecoveryLink]=useState('');const [recoveryMessage,setRecoveryMessage]=useState('');const [recoveryBusy,setRecoveryBusy]=useState(false);
+ async function loginAdmin(e:FormEvent){
+  e.preventDefault();
+  if(adminBusy)return;
+  setAdminBusy(true);setAdminError('');
+  try{
+   const d=await api('/api/auth/admin/login',{method:'POST',body:JSON.stringify({username:adminUsername.trim(),password:adminPassword})});
+   if(d.user?.role!=='admin')throw Error('Acesso administrativo não autorizado.');
+   setAdminPassword('');setAccess('allowed');
+   await refresh();
+  }catch(err){setAdminError(err instanceof Error?err.message:'Não foi possível entrar.');}
+  finally{setAdminBusy(false);}
+ }
  async function refresh(){const [p,o]=await Promise.all([api('/api/store/admin/products'),api('/api/store/admin/orders')]);setProducts(p.products||[]);setOrders(o.orders||[]);api('/api/store/admin/projects').then(d=>setProjects(d.projects||[])).catch(()=>{})}
  useEffect(()=>{api('/api/auth/me').then(d=>{if(d.user?.role==='admin'){setAccess('allowed');refresh().catch(e=>setError(e.message));}else setAccess('denied')}).catch(()=>setAccess('denied'))},[]);
  const filtered=useMemo(()=>products.filter(p=>(!categoryFilter||p.category.startsWith(categoryFilter))&&(p.name+' '+p.category).toLowerCase().includes(search.toLowerCase())),[products,search,categoryFilter]);
