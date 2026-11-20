@@ -549,3 +549,36 @@ html, body { max-width: 100%; overflow-x: clip; }
   .bitcups-collections .grid { min-width: 0; }
   .bitcups-collections .grid > * { min-width: 0; }
 }
+
+/* Structural mobile fix: size the page from the visual viewport, not from a
+   potentially oversized descendant or an animated transformed wrapper. */
+@media (max-width: 767px) {
+  :root { overflow-x: clip; }
+  html, body { margin: 0; padding: 0; width: 100%; min-width: 0; }
+  body { position: relative; }
+  .premium-header, body > main, body > footer {
+    display: block;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    margin-inline: 0;
+  }
+  .page-transition {
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    transform: none !important;
+    animation: none !important;
+  }
+  .page-transition > section {
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    margin-inline: auto;
+  }
+  .premium-header > div:first-child { flex-wrap: nowrap; }
+  .premium-header > div:first-child > a:first-child { flex: 1 1 auto; }
+  .premium-header > div:first-child > a:nth-last-child(2) { flex: 0 0 auto; }
+  .premium-header > nav { overscroll-behavior-inline: contain; }
+  .hero-copy { inline-size: 100%; min-inline-size: 0; }
+}

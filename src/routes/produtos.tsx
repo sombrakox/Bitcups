@@ -56,9 +56,6 @@ function Produtos() {
   const [limit, setLimit] = useState(PAGE);
   const [zoom, setZoom] = useState<Product | null>(null);
   const { openId, togglePanel, openPanel } = useExpandedPanel(active?.id ?? null);
-  const [topOpen, setTopOpen] = useState(true);
-  const [topSubOpen, setTopSubOpen] = useState(true);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarSubOpen, setSidebarSubOpen] = useState<string | null>(sub ?? null);
   useEffect(() => { setSidebarSubOpen(sub ?? null); }, [cat, sub]);
 
@@ -85,51 +82,9 @@ function Produtos() {
         <h1 className="mt-1 text-3xl font-extrabold md:text-5xl">Nossos produtos</h1>
       </div>
 
-      <div className="mt-6 rounded-xl border bg-card p-3 shadow-sm md:p-4">
-        <Button variant="outline" className="w-full justify-between" aria-expanded={topOpen}
-          onClick={() => setTopOpen(v => !v)}>
-          Categorias e subcategorias <ChevronDown className={`h-4 w-4 transition-transform ${topOpen ? "rotate-180" : ""}`} />
-        </Button>
-        {topOpen && (
-          <div className="mt-3 space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {visibleCategories.map(c => (
-                <Button key={c.id} size="sm" variant={active.id === c.id ? "default" : "outline"}
-                  onClick={() => {
-                    if (active.id === c.id) { setTopSubOpen(v=>!v); togglePanel(c.id); }
-                    else { setTopSubOpen(true); openPanel(c.id); go({cat:c.id}); }
-                  }}>{c.name}</Button>
-              ))}
-            </div>
-            {topSubOpen && (
-              <div className="flex flex-wrap gap-2 border-t pt-3">
-                <Button size="sm" variant={!activeSub ? "default" : "outline"} onClick={()=>go({cat:active.id})}>Todas</Button>
-                {active.subs.map(s=>(
-                  <Button key={s.id} size="sm" variant={activeSub?.id === s.id ? "default" : "outline"}
-                    onClick={()=>go(activeSub?.id === s.id ? {cat:active.id} : {cat:active.id,sub:s.id})}>{s.name}</Button>
-                ))}
-              </div>
-            )}
-            {topSubOpen && activeSub?.topics && (
-              <div className="flex flex-wrap gap-2 border-t pt-3" aria-label={`Temas de ${activeSub.name}`}>
-                <Button size="sm" variant={!activeTopic ? "default" : "outline"} onClick={()=>go({cat:active.id,sub:activeSub.id})}>Todas</Button>
-                {activeSub.topics.map(t=>(
-                  <Button key={t.id} size="sm" variant={activeTopic?.id === t.id ? "default" : "outline"}
-                    onClick={()=>go(activeTopic?.id === t.id ? {cat:active.id,sub:activeSub.id} : {cat:active.id,sub:activeSub.id,topic:t.id})}>{t.name}</Button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="mt-4 md:hidden">
-        <Button variant="outline" className="w-full justify-between" aria-expanded={mobileSidebarOpen} onClick={() => setMobileSidebarOpen(v => !v)}>
-          Navegar pelas categorias <ChevronDown className={`h-4 w-4 transition-transform ${mobileSidebarOpen ? "rotate-180" : ""}`} />
-        </Button>
-      </div>
       <div className="mt-4 flex min-w-0 flex-col gap-3 md:flex-row md:gap-8">
-        <aside data-reveal="slide-left" className={`${mobileSidebarOpen ? "block" : "hidden"} w-full min-w-0 shrink-0 md:block md:w-64`}>
-          <nav className="max-h-[60vh] overflow-y-auto rounded-lg bg-premium p-2 text-premium-foreground shadow-card md:sticky md:top-[92px] md:max-h-[calc(100vh-110px)] md:p-3">
+        <aside data-reveal="slide-left" className="w-full min-w-0 shrink-0 md:w-64">
+          <nav className="max-h-[45vh] overflow-y-auto rounded-lg bg-premium p-2 text-premium-foreground shadow-card md:sticky md:top-[92px] md:max-h-[calc(100vh-110px)] md:p-3">
             <p className="hidden px-3 pb-3 pt-1 text-xs font-semibold uppercase tracking-widest opacity-60 md:block">Categorias</p>
             <ul className="space-y-1">
               {visibleCategories.map((c) => {
@@ -142,14 +97,14 @@ function Produtos() {
                       aria-pressed={on}
                       aria-expanded={c.subs.length > 1 ? open : undefined}
                       onClick={() => pickCat(c.id)}
-                      className={`category-selector h-auto whitespace-normal flex w-full flex-col items-center gap-1.5 rounded-md p-2 text-center text-[11px] font-semibold leading-tight transition md:flex-row md:gap-3 md:text-left md:text-sm ${
+                      className={`category-selector h-auto whitespace-normal flex w-full flex-col items-center gap-1.5 rounded-md p-2 text-center text-[11px] font-semibold leading-tight transition flex-row gap-3 text-left text-sm ${
                         on ? "bg-accent text-accent-foreground" : "text-premium-foreground/75 hover:bg-premium-foreground/10 hover:text-premium-foreground"
                       }`}
                     >
-                      <img src={c.cover} alt="" className="h-11 w-11 rounded-lg object-cover md:h-9 md:w-9" />
+                      <img src={c.cover} alt="" className="h-9 w-9 rounded-lg object-cover" />
                       <span className="flex-1">{c.name}</span>
                       <span className="hidden text-xs opacity-60 md:inline">{countOf(c)}</span>
-                      {c.subs.length > 1 && <ChevronDown className={`hidden h-4 w-4 transition-transform md:block ${open ? "rotate-180" : ""}`} />}
+                      {c.subs.length > 1 && <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />}
                     </Button>
                     {open && c.subs.length > 1 && (
                       <ul className="subtopic-list mb-2 mt-1 space-y-0.5 border-l border-premium-foreground/15 pl-1.5 md:ml-4 md:pl-2">
