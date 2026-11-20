@@ -527,15 +527,25 @@ html, body { max-width: 100%; overflow-x: clip; }
   .product-grid, .product-grid > * { min-width: 0; }
 }
 
-/* Fix root width and small-screen product cards without clipping content. */
-html { width:100%; max-width:100%; overflow-x:hidden; }
-body { width:100%; min-width:0; max-width:100%; margin:0; overflow-x:hidden; }
-#root, #app { min-width:0; max-width:100%; }
-.premium-header { box-sizing:border-box; width:100%; max-width:100%; }
-@media(max-width:767px){
-  .product-grid { width:100%; min-width:0; grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .product-grid > * { min-width:0; max-width:100%; }
-  .product-card button, .product-card input { max-width:100%; }
-  .premium-header .brand-logo { width:clamp(88px,23vw,112px); max-width:100%; height:auto; }
+/* BitCups mobile viewport containment: do not let oversized descendants enlarge the page. */
+@layer base {
+  html { width: 100%; min-width: 0; overflow-x: hidden; }
+  body { width: 100%; min-width: 0; margin: 0; overflow-x: hidden; }
+  body > * { max-width: 100%; }
+  main { width: 100%; min-width: 0; max-width: 100%; overflow-x: clip; }
 }
-@media(max-width:350px){.product-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width: 767px) {
+  html, body { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; }
+  .premium-header, main, footer { box-sizing: border-box; width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  .premium-header > div, .premium-header > nav { box-sizing: border-box; max-width: 100%; }
+  .premium-header > div > a:first-child { flex: 0 1 auto; min-width: 0; }
+  .premium-header > div > a:first-child img { display: block; max-width: 100%; object-fit: contain; }
+  main > *, main section { box-sizing: border-box; min-width: 0; max-width: 100%; }
+  .hero-copy { box-sizing: border-box; width: 100%; max-width: 100%; padding-inline: 16px; }
+  .hero-copy p, .hero-copy h2 { overflow-wrap: break-word; }
+  .hero-copy .flex.flex-wrap { max-width: 100%; }
+  .hero-copy .flex.flex-wrap > * { max-width: 100%; }
+  .bitcups-collections { box-sizing: border-box; width: 100%; max-width: 100%; }
+  .bitcups-collections .grid { min-width: 0; }
+  .bitcups-collections .grid > * { min-width: 0; }
+}

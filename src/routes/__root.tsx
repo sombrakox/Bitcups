@@ -239,7 +239,7 @@ function RootComponent() {
         <FavoritesProvider>
           <SiteHeader />
 
-          <main>
+          <main className="min-w-0 w-full max-w-full">
             <MotionSurface>
               <Outlet />
             </MotionSurface>

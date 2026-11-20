@@ -211,10 +211,10 @@ function Produtos() {
 
           <label className="mt-3 flex items-center gap-2 rounded-full border bg-card px-4 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
-            <input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Buscar por nome ou código…" className="w-full min-w-0 bg-transparent text-sm outline-none" />
+            <input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Buscar por nome ou código…" className="w-full bg-transparent text-sm outline-none" />
           </label>
 
-          <div key={`${active.id}-${activeSub?.id ?? "all"}-${activeTopic?.id ?? "all"}`} className="product-grid mt-4 grid min-w-0 grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <div key={`${active.id}-${activeSub?.id ?? "all"}-${activeTopic?.id ?? "all"}`} className="product-grid mt-4 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {list.slice(0, limit).map((p) => (
               <ProductCard key={p.id} p={p} onZoom={() => setZoom(p)} />
             ))}
@@ -260,7 +260,7 @@ function ProductCard({ p, onZoom }: { p: Product; onZoom: () => void }) {
   const [qty, setQty] = useState(1);
   const inCart = items[p.id] ?? 0;
   return (
-    <div className="product-card relative flex min-w-0 flex-col overflow-hidden rounded-lg bg-card">
+    <div className="product-card relative flex flex-col overflow-hidden rounded-lg bg-card">
       <Button
         variant="ghost"
         size="icon"
@@ -284,9 +284,9 @@ function ProductCard({ p, onZoom }: { p: Product; onZoom: () => void }) {
           <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-whatsapp"><Check className="h-3 w-3" /> {inCart} no carrinho</p>
         )}
         <div className="mt-2 flex items-center justify-between rounded-full border">
-          <Button variant="ghost" size="icon" aria-label="Diminuir" className="h-8 w-7 shrink-0 rounded-full p-1 sm:w-8 sm:p-1.5" onClick={() => setQty(Math.max(1, qty - 1))}><Minus className="h-3.5 w-3.5" /></Button>
-          <input type="number" min={1} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} className="min-w-0 w-6 flex-1 bg-transparent text-center text-sm font-semibold outline-none sm:w-8" />
-          <Button variant="ghost" size="icon" aria-label="Aumentar" className="h-8 w-7 shrink-0 rounded-full p-1 sm:w-8 sm:p-1.5" onClick={() => setQty(qty + 1)}><Plus className="h-3.5 w-3.5" /></Button>
+          <Button variant="ghost" size="icon" aria-label="Diminuir" className="h-8 w-8 shrink-0 rounded-full p-1.5" onClick={() => setQty(Math.max(1, qty - 1))}><Minus className="h-3.5 w-3.5" /></Button>
+          <input type="number" min={1} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} className="min-w-0 w-8 bg-transparent text-center text-sm font-semibold outline-none" />
+          <Button variant="ghost" size="icon" aria-label="Aumentar" className="h-8 w-8 shrink-0 rounded-full p-1.5" onClick={() => setQty(qty + 1)}><Plus className="h-3.5 w-3.5" /></Button>
         </div>
         <Button
           variant="premium"

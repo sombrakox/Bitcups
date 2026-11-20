@@ -40,7 +40,7 @@ export function SiteHeader() {
   const signedIn = status !== 'guest';
   return (
     <header data-scrolled={scrolled} className="premium-header sticky top-0 z-40 border-b border-primary-foreground/10 bg-premium/95 text-premium-foreground backdrop-blur-xl">
-      <div className="mx-auto flex w-full min-w-0 max-w-7xl items-center gap-1.5 px-2 py-2 sm:gap-4 sm:px-3 md:px-8">
+      <div className="mx-auto flex w-full min-w-0 max-w-7xl items-center gap-2 px-3 py-2 sm:gap-4 md:px-8">
         <Link to="/" className="flex min-w-0 shrink items-center gap-2">
           <img src={logo} alt="Bitcups" className="brand-logo" />
         </Link>
@@ -58,7 +58,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <Link to={user?.role==='admin'?'/admin':'/admin/login'} className="hidden items-center gap-1.5 rounded-xl border border-[#c7a65b]/40 px-3 py-2 text-xs font-bold text-[#e8c46d] transition hover:bg-[#c7a65b]/15 md:inline-flex">{user?.role==='admin'?<LayoutDashboard size={16}/>:<ShieldCheck size={16}/>} {user?.role==='admin'?'Painel administrativo':'Admin'}</Link>
-        <Link to={signedIn ? "/conta" : "/login"} aria-label={signedIn ? "Minha conta" : "Entrar"} className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-2 text-xs font-bold sm:px-3 sm:text-sm text-premium-foreground transition hover:bg-primary hover:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:ml-0 md:px-4">
+        <Link to={signedIn ? "/conta" : "/login"} aria-label={signedIn ? "Minha conta" : "Entrar"} className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 text-sm font-bold text-premium-foreground transition hover:bg-primary hover:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:ml-0 md:px-4">
           <UserRound className="h-4 w-4" /> <span className="hidden sm:inline">{signedIn ? "Minha conta" : "Entrar"}</span><span className="sm:hidden">{signedIn ? "Conta" : "Entrar"}</span>
         </Link>
         <Button asChild variant="premium" className="h-10 shrink-0 rounded-md px-2 text-xs sm:px-4 sm:text-sm"><Link
