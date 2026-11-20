@@ -31,13 +31,13 @@ function Index() {
         <div className="bitcups-hero-spark bitcups-hero-spark-one" aria-hidden="true" />
         <div className="bitcups-hero-spark bitcups-hero-spark-two" aria-hidden="true" />
         <div className="hero-copy relative mx-auto max-w-7xl px-5 py-16 text-hero-foreground md:px-8 md:py-20">
-          <p className="flex items-center gap-3 text-xs font-semibold uppercase text-accent"><span className="editorial-line" />Personalizados em Salvador</p>
+          <p className="flex items-center gap-3 text-xs font-semibold uppercase text-accent"><span className="editorial-line" />Personalizados em Salvador Bahia</p>
           <h1 className="mt-6">
             <img src={heroLogo} alt="Bitcups" className="h-auto w-64 drop-shadow-2xl md:w-96" />
           </h1>
           <p className="mt-6 max-w-sm font-display text-2xl font-semibold leading-snug md:text-3xl">Sua ideia. Sua marca.<br />Um presente único.</p>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-hero-muted">
-            Canecas, térmicos, camisas e muito mais. Personalizados para marcar momentos e transformar ideias em lembranças.
+            Personalizados para presentear, vender e divulgar sua marca. Canecas, copos, garrafas, pratos, camisas e muito mais! Personalizados em porcelana, vidro, alumínio, plástico, materiais térmicos e diversas outras opções.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild variant="premium" className="btn-glow h-12 px-6"><Link to="/produtos">
@@ -100,7 +100,7 @@ function Index() {
         <div data-stagger="110" className="relative z-10 mx-auto max-w-3xl">
           <div className="mx-auto w-fit"><Instagram className="insta-icon h-11 w-11" aria-hidden="true" /></div>
           <p className="mt-5 text-xs font-bold uppercase tracking-[0.25em] text-white/80">Novidades e inspirações</p>
-          <h2 id="instagram-heading" className="mt-3 text-3xl font-extrabold md:text-5xl">Sua próxima ideia começa aqui.</h2>
+          <h2 id="instagram-heading" className="mt-3 text-3xl font-extrabold md:text-5xl">A radiância começa aqui</h2>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-white/85 md:text-base">Acompanhe nossas criações, novidades e produtos personalizados no Instagram.</p>
           <a className="instagram-follow mt-8 inline-flex items-center justify-center gap-3 rounded-full bg-white px-7 py-3 font-bold text-slate-900 shadow-xl" href="https://instagram.com/debitcups" target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5" /> Seguir @debitcups <ArrowUpRight className="h-4 w-4" /></a>
         </div>
@@ -109,7 +109,7 @@ function Index() {
       <section id="contato" data-reveal className="bitcups-contact-animated contact-section mx-auto max-w-7xl scroll-mt-28 px-5 py-16 md:px-8 md:py-20">
         <div data-reveal="fade-down" className="mx-auto mb-10 max-w-2xl text-center">
           <p className="inline-flex rounded-full bg-accent/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground">Fale com a Bitcups</p>
-          <h2 className="mt-4 text-3xl font-bold md:text-5xl">Vamos tirar sua ideia <span className="text-orange-500">do papel?</span></h2>
+          <h2 className="mt-4 text-3xl font-bold md:text-5xl">Vamos <span className="text-orange-500">fazer acontecer?</span></h2>
           <p className="mt-4 text-muted-foreground">Solicite um orçamento ou tire suas dúvidas. Estamos prontos para atender você.</p>
         </div>
         <div className="grid gap-6 lg:grid-cols-[1fr_1.05fr]">

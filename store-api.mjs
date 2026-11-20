@@ -34,6 +34,13 @@ export async function handleStoreApi(req,res,path){if(!path.startsWith('/api/sto
   const [rows]=await db().execute('SELECT id,customer_name,description,status,created_at FROM projects WHERE user_id=? ORDER BY id DESC LIMIT 100',[user.id]);return json(res,200,{projects:rows}),true;
  }
 
+ if(path==='/api/store/best-sellers'&&req.method==='GET'){
+  const [rows]=await db().execute(`SELECT oi.product_id,oi.product_name,SUM(oi.quantity) AS units
+    FROM order_items oi JOIN orders o ON o.id=oi.order_id
+    WHERE o.status <> 'cancelled' GROUP BY oi.product_id,oi.product_name
+    ORDER BY units DESC LIMIT 30`);
+  return json(res,200,{products:rows.map(r=>({id:r.product_id?`db-${r.product_id}`:String(r.product_name||'').match(/\[([a-zA-Z0-9_-]+)\]$/)?.[1]||null,units:Number(r.units)})).filter(r=>r.id)}),true;
+ }
  if(path==='/api/store/products'&&req.method==='GET'){
   const [rows]=await db().execute('SELECT id,name,description,price_cents,category,image_path,active FROM products WHERE active=1 ORDER BY id DESC LIMIT 5000');return json(res,200,{products:rows}),true;
  }
@@ -53,6 +60,13 @@ export async function handleStoreApi(req,res,path){if(!path.startsWith('/api/sto
   const name=String(x.name||'').trim(),phone=String(x.phone||'').trim();
   if(!validString(name,160)||!/^\+?[0-9 ()-]{8,25}$/.test(phone)||!Array.isArray(x.items)||x.items.length<1||x.items.length>40)
    return json(res,400,{error:'Informe nome, telefone e itens válidos'}),true;
+  const details=x.customerDetails||{};
+  const textField=(v,max)=>typeof v==='string' ? v.trim().slice(0,max) : '';
+  const documentType=details.documentType==='pj'?'pj':'pf';
+  const digits=String(details.document||'').replace(/\D/g,'');
+  if(digits.length!==(documentType==='pj'?14:11))return json(res,400,{error:'Informe CPF ou CNPJ com a quantidade correta de dígitos'}),true;
+  const delivery={documentType,document:digits,company:textField(details.company,160),zip:textField(details.zip,9),street:textField(details.street,200),number:textField(details.number,20),complement:textField(details.complement,120),neighborhood:textField(details.neighborhood,120),city:textField(details.city,120),state:textField(details.state,2),notes:textField(details.notes,1000)};
+  if(!/^\d{5}-?\d{3}$/.test(delivery.zip)||!delivery.street||!delivery.number||!delivery.neighborhood||!delivery.city||! /^[A-Za-z]{2}$/.test(delivery.state))return json(res,400,{error:'Preencha o endereço de entrega completo'}),true;
   const lines=[];
   for(const item of x.items){
    const id=String(item.id||'');const label=String(item.name||'').trim();const quantity=Number(item.quantity);
@@ -71,6 +85,9 @@ export async function handleStoreApi(req,res,path){if(!path.startsWith('/api/sto
    const total=lines.reduce((sum,item)=>sum+item.price*item.quantity,0);
    const [result]=await conn.execute('INSERT INTO orders(user_id,guest_name,guest_phone,total_cents) VALUES(?,?,?,?)',[user?.id||null,name,phone,total]);
    for(const item of lines)await conn.execute('INSERT INTO order_items(order_id,product_id,product_name,quantity,unit_price_cents) VALUES(?,?,?,?,?)',[result.insertId,item.dbId,`${item.label.slice(0,65)} [${item.id}]`,item.quantity,item.price]);
+   // Store the address in a separate table, created by the accompanying SQL migration.
+   await conn.execute('INSERT INTO order_customer_details(order_id,document_type,document_number,company_name,zip_code,street,street_number,complement,neighborhood,city,state,notes) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+    [result.insertId,delivery.documentType,delivery.document,delivery.company,delivery.zip,delivery.street,delivery.number,delivery.complement,delivery.neighborhood,delivery.city,delivery.state.toUpperCase(),delivery.notes]);
    await conn.commit();return json(res,201,{orderId:result.insertId,status:'awaiting_confirmation'}),true;
   }catch(e){await conn.rollback();throw e;}finally{conn.release();}
  }

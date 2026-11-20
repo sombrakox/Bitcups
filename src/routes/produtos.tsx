@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus, Check, Search, ZoomIn, X, Heart, ChevronDown } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
 import { toast } from "sonner";
@@ -35,15 +35,18 @@ const PAGE = 24;
 function Produtos() {
   const { cat, sub } = Route.useSearch();
   const managed = useManagedProducts();
+  const [bestIds,setBestIds]=useState<string[]>([]);
+  useEffect(()=>{fetch('/api/store/best-sellers').then(r=>r.ok?r.json():Promise.reject()).then(d=>setBestIds((d.products||[]).map((p:{id:string})=>p.id))).catch(()=>{})},[]);
   const visibleCategories = useMemo(() => {
     const known = new Set(managed.map(p => p.image));
     const mapped = categories.map(c => ({...c, subs: c.subs.map(s => ({...s, products: [
       ...s.products.filter(p => !known.has(p.image)),
       ...managed.filter(p => p.category === `${c.id}/${s.id}`),
     ]}))}));
-    const unmatched = managed.filter(p => !categories.some(c => c.subs.some(s => p.category === `${c.id}/${s.id}`)));
-    return unmatched.length ? [...mapped, {id:'novidades',name:'Novidades',cover:unmatched[0].image,subs:[{id:'novidades-todas',name:'Outros produtos',products:unmatched}]}] : mapped;
-  }, [managed]);
+    const productMap = new Map([...categories.flatMap(c=>c.subs.flatMap(s=>s.products)),...managed].map(p=>[p.id,p]));
+    const bestProducts = bestIds.map(id=>productMap.get(id)).filter((p):p is Product=>Boolean(p));
+    return [...mapped,{id:'mais-vendidos',name:'Mais vendidos',cover:bestProducts[0]?.image||categories[0]?.cover || "/favicon.png",subs:[{id:'mais-vendidos-todos',name:'Produtos mais vendidos',products:bestProducts}]}];
+  }, [managed,bestIds]);
   const navigate = Route.useNavigate();
   const active = visibleCategories.find((c) => c.id === cat) ?? visibleCategories[0];
   const activeSub = active?.subs.find((s) => s.id === sub);

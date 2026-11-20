@@ -26,6 +26,17 @@ function Carrinho() {
   const catalog = useMemo(() => [...allProducts, ...managed], [managed]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [documentType,setDocumentType]=useState<'pf'|'pj'>('pf');
+  const [document,setDocument]=useState('');
+  const [company,setCompany]=useState('');
+  const [zip,setZip]=useState('');
+  const [street,setStreet]=useState('');
+  const [number,setNumber]=useState('');
+  const [complement,setComplement]=useState('');
+  const [neighborhood,setNeighborhood]=useState('');
+  const [city,setCity]=useState('');
+  const [state,setState]=useState('BA');
+  const [notes,setNotes]=useState('');
   const [busy, setBusy] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const rows = Object.entries(items)
@@ -37,12 +48,16 @@ function Carrinho() {
     if (!name.trim() || !/^\+?[0-9 ()-]{8,25}$/.test(phone.trim()) || !privacy) {
       toast.error("Informe nome, telefone e aceite a política de privacidade."); return;
     }
+    const digits=document.replace(/\D/g,'');
+    if(digits.length!==(documentType==='pj'?14:11)|| !/^\d{5}-?\d{3}$/.test(zip.trim()) || !street.trim() || !number.trim() || !neighborhood.trim() || !city.trim() || !/^[A-Za-z]{2}$/.test(state.trim())){
+      toast.error('Preencha CPF/CNPJ e endereço de entrega completo.'); return;
+    }
     setBusy(true);
     try {
-      const response = await fetch('/api/store/quote', {method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({name:name.trim(),phone:phone.trim(),items:rows.map(({p,q})=>({id:p.id,name:productLabel(p),quantity:q}))})});
+      const response = await fetch('/api/store/quote', {method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({name:name.trim(),phone:phone.trim(),customerDetails:{documentType,document:digits,company,zip,street,number,complement,neighborhood,city,state,notes},items:rows.map(({p,q})=>({id:p.id,name:productLabel(p),quantity:q}))})});
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Não foi possível registrar o pedido');
-      const message = `${buildCartMessage(items, name)}\nTelefone: ${phone.trim()}\nNúmero do pedido: #${result.orderId}\nAguardando confirmação pelo WhatsApp.`;
+      const message = `${buildCartMessage(items, name)}\nTelefone: ${phone.trim()}\n${documentType==='pj'?'CNPJ':'CPF'}: ${digits}\n${company?'Empresa: '+company+'\n':''}Entrega: ${street}, ${number}${complement?', '+complement:''} - ${neighborhood}, ${city}/${state.toUpperCase()} - CEP ${zip}\n${notes?'Observações: '+notes+'\n':''}Número do pedido: #${result.orderId}\nAguardando confirmação pelo WhatsApp.`;
       const link = waLink(message);
       const opened = window.open(link,'_blank','noopener,noreferrer');
       if (!opened) { window.location.href = link; }
@@ -81,6 +96,19 @@ function Carrinho() {
             <input id="checkout-name" required maxLength={160} value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring" />
             <label className="mt-3 block text-sm font-semibold" htmlFor="checkout-phone">WhatsApp para contato</label>
             <input id="checkout-phone" required type="tel" maxLength={25} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(71) 99999-9999" className="mt-2 w-full rounded-md border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring" />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-semibold">Tipo de cliente<select className="mt-2 w-full rounded-md border bg-background px-4 py-3" value={documentType} onChange={e=>{setDocumentType(e.target.value as 'pf'|'pj');setDocument('')}}><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select></label>
+              <label className="block text-sm font-semibold">{documentType==='pj'?'CNPJ':'CPF'}<input required inputMode="numeric" autoComplete="off" maxLength={18} value={document} onChange={e=>setDocument(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3" placeholder={documentType==='pj'?'00.000.000/0000-00':'000.000.000-00'}/></label>
+              <label className="block text-sm font-semibold sm:col-span-2">Nome da empresa (opcional)<input maxLength={160} value={company} onChange={e=>setCompany(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold">CEP<input required inputMode="numeric" maxLength={9} value={zip} onChange={e=>setZip(e.target.value)} placeholder="00000-000" className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold">Estado (UF)<input required maxLength={2} value={state} onChange={e=>setState(e.target.value.toUpperCase())} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold sm:col-span-2">Rua / Avenida<input required maxLength={200} value={street} onChange={e=>setStreet(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold">Número<input required maxLength={20} value={number} onChange={e=>setNumber(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold">Complemento (opcional)<input maxLength={120} value={complement} onChange={e=>setComplement(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold">Bairro<input required maxLength={120} value={neighborhood} onChange={e=>setNeighborhood(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold">Cidade<input required maxLength={120} value={city} onChange={e=>setCity(e.target.value)} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+              <label className="block text-sm font-semibold sm:col-span-2">Observações da entrega (opcional)<textarea maxLength={1000} value={notes} onChange={e=>setNotes(e.target.value)} rows={3} className="mt-2 w-full rounded-md border bg-background px-4 py-3"/></label>
+            </div>
             <label className="mt-3 flex items-start gap-2 text-xs"><input type="checkbox" checked={privacy} onChange={e=>setPrivacy(e.target.checked)} /> Autorizo o uso dos dados para atendimento deste orçamento, conforme a <Link to="/privacidade" className="underline">Política de Privacidade</Link>.</label>
             <Button type="button" disabled={busy || !privacy} onClick={finishOrder} variant="whatsapp" className="btn-glow mt-4 h-auto w-full whitespace-normal py-4">
               <MessageCircle className="h-5 w-5" /> {busy ? 'Registrando pedido...' : 'Registrar pedido e continuar no WhatsApp'}
