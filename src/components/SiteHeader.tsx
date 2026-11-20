@@ -40,8 +40,8 @@ export function SiteHeader() {
   const signedIn = status !== 'guest';
   return (
     <header data-scrolled={scrolled} className="premium-header sticky top-0 z-40 border-b border-primary-foreground/10 bg-premium/95 text-premium-foreground backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-2 md:px-8">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="mx-auto flex w-full min-w-0 max-w-7xl items-center gap-2 px-3 py-2 sm:gap-4 md:px-8">
+        <Link to="/" className="flex min-w-0 shrink items-center gap-2">
           <img src={logo} alt="Bitcups" className="brand-logo" />
         </Link>
         <nav className="hidden flex-1 justify-center gap-1 md:flex">
@@ -61,7 +61,7 @@ export function SiteHeader() {
         <Link to={signedIn ? "/conta" : "/login"} aria-label={signedIn ? "Minha conta" : "Entrar"} className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 text-sm font-bold text-premium-foreground transition hover:bg-primary hover:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:ml-0 md:px-4">
           <UserRound className="h-4 w-4" /> <span className="hidden sm:inline">{signedIn ? "Minha conta" : "Entrar"}</span><span className="sm:hidden">{signedIn ? "Conta" : "Entrar"}</span>
         </Link>
-        <Button asChild variant="premium" className="h-10 rounded-md px-3 sm:px-4"><Link
+        <Button asChild variant="premium" className="h-10 shrink-0 rounded-md px-2 text-xs sm:px-4 sm:text-sm"><Link
           to="/carrinho"
         >
           <ShoppingCart className="h-4 w-4" />
@@ -71,7 +71,7 @@ export function SiteHeader() {
           )}
         </Link></Button>
       </div>
-      <nav className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
+      <nav className="flex w-full min-w-0 gap-1 overflow-x-auto px-3 pb-2 md:hidden">
         {nav.map((n) => (
           <Link
             key={n.to}

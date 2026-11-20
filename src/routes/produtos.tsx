@@ -58,6 +58,7 @@ function Produtos() {
   const { openId, togglePanel, openPanel } = useExpandedPanel(active?.id ?? null);
   const [topOpen, setTopOpen] = useState(true);
   const [topSubOpen, setTopSubOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarSubOpen, setSidebarSubOpen] = useState<string | null>(sub ?? null);
   useEffect(() => { setSidebarSubOpen(sub ?? null); }, [cat, sub]);
 
@@ -78,7 +79,7 @@ function Produtos() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-8 md:px-4 md:py-12">
+    <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-8 md:px-4 md:py-12">
       <div data-reveal="fade-down">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Vitrine Bitcups</p>
         <h1 className="mt-1 text-3xl font-extrabold md:text-5xl">Nossos produtos</h1>
@@ -121,9 +122,14 @@ function Produtos() {
           </div>
         )}
       </div>
-      <div className="mt-4 flex gap-3 md:gap-8">
-        <aside data-reveal="slide-left" className="w-[108px] shrink-0 md:w-64">
-          <nav className="sticky top-[120px] max-h-[calc(100vh-140px)] overflow-y-auto rounded-lg bg-premium p-1.5 text-premium-foreground shadow-card md:top-[92px] md:p-3">
+      <div className="mt-4 md:hidden">
+        <Button variant="outline" className="w-full justify-between" aria-expanded={mobileSidebarOpen} onClick={() => setMobileSidebarOpen(v => !v)}>
+          Navegar pelas categorias <ChevronDown className={`h-4 w-4 transition-transform ${mobileSidebarOpen ? "rotate-180" : ""}`} />
+        </Button>
+      </div>
+      <div className="mt-4 flex min-w-0 flex-col gap-3 md:flex-row md:gap-8">
+        <aside data-reveal="slide-left" className={`${mobileSidebarOpen ? "block" : "hidden"} w-full min-w-0 shrink-0 md:block md:w-64`}>
+          <nav className="max-h-[60vh] overflow-y-auto rounded-lg bg-premium p-2 text-premium-foreground shadow-card md:sticky md:top-[92px] md:max-h-[calc(100vh-110px)] md:p-3">
             <p className="hidden px-3 pb-3 pt-1 text-xs font-semibold uppercase tracking-widest opacity-60 md:block">Categorias</p>
             <ul className="space-y-1">
               {visibleCategories.map((c) => {
@@ -195,7 +201,7 @@ function Produtos() {
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1">
+        <section className="w-full min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2 border-b pb-3">
             <h2 className="text-xl font-bold md:text-3xl">{active.name}</h2>
             <span className="shrink-0 text-xs text-muted-foreground">{list.length} {list.length === 1 ? "item" : "itens"}</span>

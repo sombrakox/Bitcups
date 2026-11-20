@@ -518,3 +518,11 @@ img[data-img="loaded"] { animation: bitcups-img-in 800ms var(--ease-premium) bac
 .bg-premium .hero-photo { animation: none !important; transform: none !important; object-position: right center; }
 .bg-premium .hero-copy h1 img { animation: bitcups-logo-hover 5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .bg-premium .hero-copy h1 img { animation: none !important; } }
+
+/* Responsive layout: prevent horizontal overflow and keep product grid full width. */
+html, body { max-width: 100%; overflow-x: clip; }
+@media (max-width: 767px) {
+  .premium-header { width: 100%; max-width: 100%; }
+  .premium-header .brand-logo { width: clamp(88px, 24vw, 116px); height: auto; max-height: 50px; object-fit: contain; }
+  .product-grid, .product-grid > * { min-width: 0; }
+}
