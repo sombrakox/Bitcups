@@ -478,3 +478,43 @@ img[data-img="loaded"] { animation: bitcups-img-in 800ms var(--ease-premium) bac
   .premium-header, .cart-badge, .heart-pop, img[data-img] { animation: none !important; }
   .btn-glow::before, .contact-whatsapp::before, .instagram-follow::before { animation: none !important; display: none; }
 }
+
+/* BitCups cinematic hero: layered product photography + independent vector effects. */
+.bitcups-cinematic-hero { isolation:isolate; background:radial-gradient(circle at 70% 35%,#2d2007 0%,#0a0906 60%,#030303 100%); }
+.bitcups-cinema-products { position:absolute; z-index:0; inset:0; pointer-events:none; -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.18) 15%,#000 37%); mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.18) 15%,#000 37%); }
+.bitcups-cinema-products img { position:absolute;right:0;top:0;width:auto;max-width:none;height:100%;object-fit:contain;object-position:right center;transform:none;animation:none; }
+.bitcups-cinema-shade {position:absolute;z-index:1;inset:0;background:linear-gradient(90deg,rgba(5,5,5,.94) 0%,rgba(5,5,5,.91) 19%,rgba(5,5,5,.65) 35%,rgba(5,5,5,.08) 65%,transparent 90%);pointer-events:none;}
+.bitcups-cinema-vectors {position:absolute;z-index:2;inset:0;width:100%;height:100%;pointer-events:none;opacity:.8;}
+.bitcups-cinema-arc {stroke-dasharray:1000;stroke-dashoffset:1000;animation:bitcups-draw 2.4s .35s ease-out forwards;}
+.bitcups-cinema-trace {stroke-dasharray:14 850;stroke-dashoffset:0;filter:drop-shadow(0 0 7px #ffe162);animation:bitcups-trace 8s 2s linear infinite;}
+.bitcups-cinema-line {stroke-dasharray:1600;stroke-dashoffset:1600;animation:bitcups-draw 2.6s .5s ease-out forwards;}
+.bitcups-cinema-spark {animation:bitcups-twinkle 3.2s ease-in-out infinite;}.bitcups-cinema-spark-delay{animation-delay:1.6s;}
+.bitcups-cinema-enter {animation:bitcups-fade-up .85s both;}.bitcups-cinema-enter:nth-child(2){animation-delay:.12s}.bitcups-cinema-enter:nth-child(3){animation-delay:.22s}.bitcups-cinema-enter:nth-child(4){animation-delay:.33s}.bitcups-cinema-enter:nth-child(5){animation-delay:.44s}
+.bitcups-cinema-logo{filter:drop-shadow(0 9px 20px rgba(0,0,0,.7));}
+@keyframes bitcups-product-reveal{from{opacity:0;transform:translateX(35px) scale(1.05)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes bitcups-product-float{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-9px,-7px,0) scale(1.025)}}
+@keyframes bitcups-draw{to{stroke-dashoffset:0}}
+@keyframes bitcups-trace{to{stroke-dashoffset:-864}}
+@keyframes bitcups-twinkle{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes bitcups-fade-up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:767px){.bitcups-cinema-products{inset:0;opacity:.82;-webkit-mask-image:linear-gradient(0deg,transparent 0%,rgba(0,0,0,.35) 38%,#000 75%);mask-image:linear-gradient(0deg,transparent 0%,rgba(0,0,0,.35) 38%,#000 75%)}.bitcups-cinema-products img{top:0;right:0;width:100%;height:57%;object-fit:cover;object-position:54% top}.bitcups-cinema-shade{background:linear-gradient(0deg,#080807 4%,rgba(8,8,7,.97) 35%,rgba(8,8,7,.48) 65%,rgba(8,8,7,.1) 100%)}.bitcups-cinema-content{align-items:flex-end;min-height:730px;padding-bottom:48px}.bitcups-cinema-vectors{opacity:.5}.bitcups-cinema-copy{max-width:100%}}
+@media(prefers-reduced-motion:reduce){.bitcups-cinematic-hero *, .bitcups-cinematic-hero *::before,.bitcups-cinematic-hero *::after{animation:none!important;transition:none!important}.bitcups-cinema-arc,.bitcups-cinema-line{stroke-dashoffset:0}.bitcups-cinema-trace{display:none}}
+
+/* Hand-drawn yellow flourish beneath the hero headline. */
+.bitcups-title-underline { overflow:visible; filter:drop-shadow(0 2px 5px rgba(255,211,0,.28)); }
+.bitcups-title-underline path { transform-origin:left center; animation:bitcups-underline-reveal 1.1s .5s both cubic-bezier(.2,.8,.2,1); }
+@keyframes bitcups-underline-reveal {from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.bitcups-title-underline path{animation:none}}
+
+/* BitCups: movimento flutuante suave da marca, sem distorcer a arte. */
+@keyframes bitcups-logo-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-0.5deg); }
+  50% { transform: translate3d(0, -7px, 0) rotate(0.5deg); }
+}
+.brand-logo { animation: bitcups-logo-float 4.5s ease-in-out infinite; transform-origin: center; will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .brand-logo { animation: none; will-change: auto; } }
+
+/* Banner clássico restaurado: imagem estável, sem zoom/corte animado. */
+.bg-premium .hero-photo { animation: none !important; transform: none !important; object-position: right center; }
+.bg-premium .hero-copy h1 img { animation: bitcups-logo-hover 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .bg-premium .hero-copy h1 img { animation: none !important; } }

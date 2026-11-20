@@ -22,27 +22,19 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <>
-      <section className="relative overflow-hidden bg-premium">
-        <img src={hero} alt="Canecas, copos térmicos, garrafas, camisas e sandálias personalizados Bitcups" className="hero-photo absolute inset-0 h-full w-full object-cover object-right" />
+      <section className="relative overflow-hidden bg-premium" aria-label="Produtos personalizados BitCups">
+        <img src={hero} alt="Canecas, copos, garrafas e outros personalizados BitCups" className="hero-photo absolute inset-0 h-full w-full object-cover object-right" />
         <div className="absolute inset-0 bg-hero" />
-        <div className="bitcups-hero-aura" aria-hidden="true" />
-        <div className="bitcups-hero-orbit bitcups-hero-orbit-one" aria-hidden="true" />
-        <div className="bitcups-hero-orbit bitcups-hero-orbit-two" aria-hidden="true" />
-        <div className="bitcups-hero-spark bitcups-hero-spark-one" aria-hidden="true" />
-        <div className="bitcups-hero-spark bitcups-hero-spark-two" aria-hidden="true" />
         <div className="hero-copy relative mx-auto max-w-7xl px-5 py-16 text-hero-foreground md:px-8 md:py-20">
-          <p className="flex items-center gap-3 text-xs font-semibold uppercase text-accent"><span className="editorial-line" />Personalizados em Salvador Bahia</p>
-          <h1 className="mt-6">
-            <img src={heroLogo} alt="Bitcups" className="h-auto w-64 drop-shadow-2xl md:w-96" />
-          </h1>
-          <p className="mt-6 max-w-sm font-display text-2xl font-semibold leading-snug md:text-3xl">Sua ideia. Sua marca.<br />Um presente único.</p>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-hero-muted">
-            Personalizados para presentear, vender e divulgar sua marca. Canecas, copos, garrafas, pratos, camisas e muito mais! Personalizados em porcelana, vidro, alumínio, plástico, materiais térmicos e diversas outras opções.
-          </p>
+          <p className="flex items-center gap-3 text-xs font-semibold uppercase text-accent"><span className="editorial-line" />Personalizados em Salvador • BA</p>
+          <h1 className="mt-6"><img src={heroLogo} alt="BitCups" className="h-auto w-64 drop-shadow-2xl md:w-96" /></h1>
+          <div className="mt-6 max-w-sm">
+            <h2 className="font-display text-[clamp(1.75rem,2.35vw,2.65rem)] font-extrabold leading-[1.16] tracking-tight">Sua ideia. Sua marca.<br /><span className="text-[#ffda16]">Um presente único.</span></h2>
+            <svg className="bitcups-title-underline mt-2 block h-4 w-[min(100%,320px)]" viewBox="0 0 320 16" preserveAspectRatio="none" aria-hidden="true"><path d="M 4 11 Q 128 0 310 6 Q 185 7 4 14 Z" fill="#ffda16" /></svg>
+          </div>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-hero-muted">Personalizados para presentear, vender e divulgar sua marca. Canecas, copos, garrafas, pratos, camisas e muito mais! Personalizados em porcelana, vidro, alumínio, plástico, materiais térmicos e diversas outras opções.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="premium" className="btn-glow h-12 px-6"><Link to="/produtos">
-              Ver vitrine <ArrowRight className="h-4 w-4" />
-            </Link></Button>
+            <Button asChild variant="premium" className="btn-glow h-12 px-6"><Link to="/produtos">Ver vitrine <ArrowRight className="h-4 w-4" /></Link></Button>
             <Button asChild variant="hero" className="h-12 px-6"><Link to="/projeto">Enviar meu projeto <Upload /></Link></Button>
           </div>
         </div>

@@ -10,12 +10,13 @@ import { categories, countOf, productLabel, useManagedProducts, type Product } f
 import { useCart } from "@/lib/cart";
 import { useExpandedPanel } from "@/lib/accordion";
 
-type S = { cat?: string; sub?: string };
+type S = { cat?: string; sub?: string; topic?: string };
 
 export const Route = createFileRoute("/produtos")({
   validateSearch: (s: Record<string, unknown>): S => ({
     ...(typeof s["cat"] === "string" ? { cat: s["cat"] } : {}),
     ...(typeof s["sub"] === "string" ? { sub: s["sub"] } : {}),
+    ...(typeof s["topic"] === "string" ? { topic: s["topic"] } : {}),
   }),
   head: () => ({
     meta: [
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/produtos")({
 const PAGE = 24;
 
 function Produtos() {
-  const { cat, sub } = Route.useSearch();
+  const { cat, sub, topic } = Route.useSearch();
   const managed = useManagedProducts();
   const [bestIds,setBestIds]=useState<string[]>([]);
   useEffect(()=>{fetch('/api/store/best-sellers').then(r=>r.ok?r.json():Promise.reject()).then(d=>setBestIds((d.products||[]).map((p:{id:string})=>p.id))).catch(()=>{})},[]);
@@ -50,16 +51,21 @@ function Produtos() {
   const navigate = Route.useNavigate();
   const active = visibleCategories.find((c) => c.id === cat) ?? visibleCategories[0];
   const activeSub = active?.subs.find((s) => s.id === sub);
+  const activeTopic = activeSub?.topics?.find((t) => t.id === topic);
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(PAGE);
   const [zoom, setZoom] = useState<Product | null>(null);
   const { openId, togglePanel, openPanel } = useExpandedPanel(active?.id ?? null);
+  const [topOpen, setTopOpen] = useState(true);
+  const [topSubOpen, setTopSubOpen] = useState(true);
+  const [sidebarSubOpen, setSidebarSubOpen] = useState<string | null>(sub ?? null);
+  useEffect(() => { setSidebarSubOpen(sub ?? null); }, [cat, sub]);
 
   const list = useMemo(() => {
-    const base = activeSub ? activeSub.products : (active?.subs ?? []).flatMap((s) => s.products);
+    const base = activeTopic ? activeTopic.products : activeSub ? activeSub.products : (active?.subs ?? []).flatMap((s) => s.products);
     const t = q.trim().toLowerCase();
     return t ? base.filter((p) => productLabel(p).toLowerCase().includes(t)) : base;
-  }, [active, activeSub, q]);
+  }, [active, activeSub, activeTopic, q]);
 
   if (!active) return null;
 
@@ -78,7 +84,44 @@ function Produtos() {
         <h1 className="mt-1 text-3xl font-extrabold md:text-5xl">Nossos produtos</h1>
       </div>
 
-      <div className="mt-6 flex gap-3 md:gap-8">
+      <div className="mt-6 rounded-xl border bg-card p-3 shadow-sm md:p-4">
+        <Button variant="outline" className="w-full justify-between" aria-expanded={topOpen}
+          onClick={() => setTopOpen(v => !v)}>
+          Categorias e subcategorias <ChevronDown className={`h-4 w-4 transition-transform ${topOpen ? "rotate-180" : ""}`} />
+        </Button>
+        {topOpen && (
+          <div className="mt-3 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {visibleCategories.map(c => (
+                <Button key={c.id} size="sm" variant={active.id === c.id ? "default" : "outline"}
+                  onClick={() => {
+                    if (active.id === c.id) { setTopSubOpen(v=>!v); togglePanel(c.id); }
+                    else { setTopSubOpen(true); openPanel(c.id); go({cat:c.id}); }
+                  }}>{c.name}</Button>
+              ))}
+            </div>
+            {topSubOpen && (
+              <div className="flex flex-wrap gap-2 border-t pt-3">
+                <Button size="sm" variant={!activeSub ? "default" : "outline"} onClick={()=>go({cat:active.id})}>Todas</Button>
+                {active.subs.map(s=>(
+                  <Button key={s.id} size="sm" variant={activeSub?.id === s.id ? "default" : "outline"}
+                    onClick={()=>go(activeSub?.id === s.id ? {cat:active.id} : {cat:active.id,sub:s.id})}>{s.name}</Button>
+                ))}
+              </div>
+            )}
+            {topSubOpen && activeSub?.topics && (
+              <div className="flex flex-wrap gap-2 border-t pt-3" aria-label={`Temas de ${activeSub.name}`}>
+                <Button size="sm" variant={!activeTopic ? "default" : "outline"} onClick={()=>go({cat:active.id,sub:activeSub.id})}>Todas</Button>
+                {activeSub.topics.map(t=>(
+                  <Button key={t.id} size="sm" variant={activeTopic?.id === t.id ? "default" : "outline"}
+                    onClick={()=>go(activeTopic?.id === t.id ? {cat:active.id,sub:activeSub.id} : {cat:active.id,sub:activeSub.id,topic:t.id})}>{t.name}</Button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex gap-3 md:gap-8">
         <aside data-reveal="slide-left" className="w-[108px] shrink-0 md:w-64">
           <nav className="sticky top-[120px] max-h-[calc(100vh-140px)] overflow-y-auto rounded-lg bg-premium p-1.5 text-premium-foreground shadow-card md:top-[92px] md:p-3">
             <p className="hidden px-3 pb-3 pt-1 text-xs font-semibold uppercase tracking-widest opacity-60 md:block">Categorias</p>
@@ -111,7 +154,12 @@ function Produtos() {
                               <Button
                                 variant="ghost"
                                 aria-pressed={sel}
-                                onClick={() => go(s.id ? { cat: c.id, sub: s.id } : { cat: c.id })}
+                                onClick={() => {
+                                  if (!s.id) { setSidebarSubOpen(null); go({cat:c.id}); }
+                                  else if (activeSub?.id === s.id && sidebarSubOpen === s.id) {
+                                    setSidebarSubOpen(null); go({cat:c.id});
+                                  } else { setSidebarSubOpen(s.id); go({cat:c.id,sub:s.id}); }
+                                }}
                                 className={`h-auto w-full justify-between whitespace-normal rounded-md px-2 py-1.5 text-left text-[11px] font-medium leading-tight md:text-sm ${
                                   sel ? "bg-premium-foreground/15 text-accent" : "text-premium-foreground/70 hover:bg-premium-foreground/10 hover:text-premium-foreground"
                                 }`}
@@ -119,6 +167,22 @@ function Produtos() {
                                 <span>{s.name}</span>
                                 <span className="hidden text-xs opacity-60 md:inline">{s.n}</span>
                               </Button>
+                              {sel && sidebarSubOpen === s.id && activeSub?.topics && (
+                                <ul className="ml-2 mt-1 space-y-0.5 border-l border-accent/40 pl-2">
+                                  {activeSub.topics.map((t) => (
+                                    <li key={t.id}>
+                                      <Button
+                                        variant="ghost"
+                                        aria-pressed={activeTopic?.id === t.id}
+                                        onClick={() => go(activeTopic?.id === t.id ? {cat:c.id,sub:s.id!} : {cat:c.id,sub:s.id!,topic:t.id})}
+                                        className={`h-auto w-full justify-between whitespace-normal rounded-md px-2 py-1.5 text-left text-[11px] leading-tight md:text-sm ${activeTopic?.id === t.id ? 'bg-accent text-accent-foreground' : 'text-premium-foreground/75 hover:bg-premium-foreground/10 hover:text-premium-foreground'}`}
+                                      >
+                                        <span>{t.name}</span><span className="hidden text-xs opacity-60 md:inline">{t.products.length}</span>
+                                      </Button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                             </li>
                           );
                         })}
@@ -137,14 +201,14 @@ function Produtos() {
             <span className="shrink-0 text-xs text-muted-foreground">{list.length} {list.length === 1 ? "item" : "itens"}</span>
           </div>
 
-          {activeSub && <p className="mt-2 text-sm font-semibold text-muted-foreground">{activeSub.name}</p>}
+          {activeSub && <p className="mt-2 text-sm font-semibold text-muted-foreground">{activeSub.name}{activeTopic ? ` / ${activeTopic.name}` : ""}</p>}
 
           <label className="mt-3 flex items-center gap-2 rounded-full border bg-card px-4 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Buscar por nome ou código…" className="w-full bg-transparent text-sm outline-none" />
           </label>
 
-          <div key={`${active.id}-${activeSub?.id ?? "all"}`} className="product-grid mt-4 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <div key={`${active.id}-${activeSub?.id ?? "all"}-${activeTopic?.id ?? "all"}`} className="product-grid mt-4 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {list.slice(0, limit).map((p) => (
               <ProductCard key={p.id} p={p} onZoom={() => setZoom(p)} />
             ))}

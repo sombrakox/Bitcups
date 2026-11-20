@@ -12,13 +12,13 @@ import vitrine from "@/data/vitrine.json";
 export const WHATSAPP_NUMBER = "5571982602013";
 
 export type Product = { id: string; code?: string; name: string; description?: string; image: string; category?: string };
-export type SubTopic = { id: string; name: string; products: Product[] };
+export type SubTopic = { id: string; name: string; products: Product[]; topics?: SubTopic[] };
 export type Category = { id: string; name: string; cover: string; subs: SubTopic[] };
 
 const one = (id: string, name: string, products: Product[]): SubTopic[] => [{ id, name, products }];
 
 const legacy = (items: Product[], predicate: (p: Product) => boolean) => items.filter(predicate);
-const matches = (p: Product, expression: RegExp) => expression.test(`${p.name} ${p.description || ''}`.toLowerCase());
+const matches = (p: Product, expression: RegExp) => expression.test(p.name.toLowerCase());
 const allOld = [
   ...vitrine.porcelana.flatMap(s => s.products), ...vitrine.maes,
   ...vitrine.aluminio, ...vitrine.plastico, ...vitrine.copos, ...vitrine.camisas,
@@ -27,18 +27,37 @@ const uniqueOld = Array.from(new Map(allOld.map(p => [p.id, p])).values());
 const old = (pattern: RegExp) => legacy(uniqueOld, p => matches(p, pattern));
 const sub = (id: string, name: string, products: Product[] = []): SubTopic => ({id,name,products});
 
+// Temas adicionais construídos apenas com as informações já existentes no catálogo.
+// O produto mantém integralmente nome, código, imagem e descrição.
+const topicsByDesign = (prefix: string, products: Product[]): SubTopic[] => {
+  const groups: { id: string; name: string; test: (p: Product) => boolean }[] = [
+    { id: 'times', name: 'Times', test: p => /\b(?:de time|bahia|vit[oó]ria)\b/i.test(p.name) },
+    { id: 'natal', name: 'Natal', test: p => /\bnatal\b/i.test(p.name) },
+    { id: 'frases', name: 'Frases e mensagens', test: p => /\b(?:limite|cultive|sonhe|planeje|conquiste|leveza|paz|amor|alegria)\b/i.test(p.name) },
+  ];
+  const result = groups.map(g => sub(`${prefix}-${g.id}`, g.name, products.filter(g.test)));
+  const assigned = new Set(result.flatMap(g => g.products.map(p => p.id)));
+  const remaining = products.filter(p => !assigned.has(p.id));
+  if (remaining.length) result.push(sub(`${prefix}-outros`, 'Outros modelos', remaining));
+  return result.filter(g => g.products.length > 0);
+};
+const withDesignTopics = (id: string, name: string, products: Product[]): SubTopic => ({
+  ...sub(id, name, products),
+  ...(products.length > 0 ? { topics: topicsByDesign(id, products) } : {}),
+});
+
 export const categories: Category[] = [
   {id:'canecas',name:'Canecas',cover:mugs,subs:[
-    sub('porcelana','Porcelana',[...vitrine.porcelana.flatMap(s=>s.products)]),
+    {...sub('porcelana','Porcelana',[...vitrine.porcelana.flatMap(s=>s.products)]),topics:vitrine.porcelana.map((group,i)=>sub(`porcelana-tema-${i+1}`,group.name,group.products))},
     sub('polimero','Polímero',[{id:'caneca-polimero',name:'Caneca de polímero',image:polymer},...old(/caneca.*pol[ií]mero/)]),
     sub('vidro','Vidro',old(/caneca.*vidro/)),
-    sub('aluminio','Alumínio',old(/caneca.*alum[ií]nio/)),
-    sub('plastico','Plástico',old(/caneca.*pl[aá]stic/)),
+    withDesignTopics('aluminio','Alumínio',old(/caneca.*alum[ií]nio/)),
+    withDesignTopics('plastico','Plástico',old(/caneca.*(?:pl[aá]stic|gel)/)),
   ]},
   {id:'copos',name:'Copos',cover:cups,subs:[
-    sub('plastico','Copos plásticos',old(/copo.*pl[aá]stic/)),
+    withDesignTopics('plastico','Copos plásticos',old(/copo.*pl[aá]stic/)),
     sub('vidro','Copos de vidro',old(/copo.*vidro/)),
-    sub('aluminio','Copos de alumínio',old(/copo.*alum[ií]nio/)),
+    withDesignTopics('aluminio','Copos de alumínio',old(/copo.*alum[ií]nio/)),
     sub('termicos','Copos térmicos',[{id:'copo-termico',name:'Copo térmico personalizado',image:cups},...vitrine.copos]),
   ]},
   {id:'garrafas-squeezes',name:'Garrafas e Squeezes',cover:bottles,subs:[
@@ -50,7 +69,7 @@ export const categories: Category[] = [
     sub('camisas-polo','Camisas polo'),sub('sandalias','Sandálias',[{id:'sandalia',name:'Sandália personalizada',image:sandals}]),
   ]},
   {id:'chaveiros-acessorios',name:'Chaveiros e Acessórios',cover:keychains,subs:[
-    sub('aco-inox','Chaveiros de aço inox'),sub('polimero','Chaveiros de polímero'),sub('mdf','Chaveiros MDF'),
+    sub('aco-inox','Chaveiros de aço inox'),sub('polimero','Chaveiros de polímero'),sub('mdf','Chaveiros MDF',vitrine.maes.filter(p => /chaveiro.*mdf/i.test(p.name))),
     sub('acrilicos','Chaveiros acrílicos'),sub('outros','Outros acessórios',[{id:'chaveiro',name:'Chaveiro personalizado',image:keychains}]),
   ]},
   {id:'quadros-decoracao',name:'Quadros e Decoração',cover:frames,subs:[
@@ -58,7 +77,7 @@ export const categories: Category[] = [
     sub('azulejos','Azulejos personalizados'),sub('almofadas','Almofadas'),
   ]},
   {id:'kits-presentes',name:'Kits e Presentes',cover:mugs,subs:[
-    sub('dia-das-maes','Dia das Mães',vitrine.maes),sub('dia-dos-pais','Dia dos Pais'),
+    sub('dia-das-maes','Dia das Mães',vitrine.maes.filter(p => /(?:kit|conjunto|combo|caixa|\bcx\b)/i.test(p.name))),sub('dia-dos-pais','Dia dos Pais'),
     sub('dia-dos-namorados','Dia dos Namorados'),sub('natal-ano-novo','Natal e Ano Novo'),
     sub('kit-personalizado','Kit personalizado'),
   ]},
@@ -68,9 +87,17 @@ export const categories: Category[] = [
 export function normalizeCategory(value: string, name = ''): string {
   if (categories.some(c => c.subs.some(s => `${c.id}/${s.id}` === value))) return value;
   const oldCategory = value.toLowerCase(); const n = name.toLowerCase();
+  // Categorias antigas são traduzidas pelo tipo real do produto, nunca apenas pelo material.
+  if (/chaveiro/i.test(n)) return /mdf/i.test(n) ? 'chaveiros-acessorios/mdf' : 'chaveiros-acessorios/outros';
+  if (/\bcopo\b/i.test(n)) {
+    if (/t[eé]rmic/i.test(n)) return 'copos/termicos';
+    if (/alum[ií]nio/i.test(n)) return 'copos/aluminio';
+    if (/vidro/i.test(n)) return 'copos/vidro';
+    if (/pl[aá]stic/i.test(n)) return 'copos/plastico';
+  }
   if (oldCategory.includes('porcelana')) return 'canecas/porcelana';
   if (oldCategory.includes('aluminio')) return n.includes('copo') ? 'copos/aluminio' : 'canecas/aluminio';
-  if (oldCategory.includes('plastico')) return n.includes('copo') ? 'copos/plastico' : 'canecas/polimero';
+  if (oldCategory.includes('plastico')) return n.includes('copo') ? 'copos/plastico' : n.includes('caneca') ? 'canecas/plastico' : value;
   if (oldCategory.includes('copos-termicos')) return 'copos/termicos';
   if (oldCategory.includes('garrafas')) return 'garrafas-squeezes/termicas';
   if (oldCategory.includes('sandalias')) return 'vestuario/sandalias';
