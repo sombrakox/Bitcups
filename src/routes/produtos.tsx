@@ -82,9 +82,9 @@ function Produtos() {
         <h1 className="mt-1 text-3xl font-extrabold md:text-5xl">Nossos produtos</h1>
       </div>
 
-      <div className="mt-4 flex min-w-0 flex-col gap-3 md:flex-row md:gap-8">
-        <aside data-reveal="slide-left" className="w-full min-w-0 shrink-0 md:w-64">
-          <nav className="max-h-[45vh] overflow-y-auto rounded-lg bg-premium p-2 text-premium-foreground shadow-card md:sticky md:top-[92px] md:max-h-[calc(100vh-110px)] md:p-3">
+      <div className="mt-4 flex min-w-0 flex-row items-start gap-2 sm:gap-4 md:gap-8">
+        <aside data-reveal="slide-left" className="w-[116px] min-w-0 shrink-0 sm:w-44 md:w-64">
+          <nav className="sticky top-2 max-h-[calc(100dvh-20px)] overflow-y-auto rounded-lg bg-premium p-2 text-premium-foreground shadow-card md:sticky md:top-[92px] md:max-h-[calc(100vh-110px)] md:p-3">
             <p className="hidden px-3 pb-3 pt-1 text-xs font-semibold uppercase tracking-widest opacity-60 md:block">Categorias</p>
             <ul className="space-y-1">
               {visibleCategories.map((c) => {
@@ -97,12 +97,12 @@ function Produtos() {
                       aria-pressed={on}
                       aria-expanded={c.subs.length > 1 ? open : undefined}
                       onClick={() => pickCat(c.id)}
-                      className={`category-selector h-auto whitespace-normal flex w-full flex-col items-center gap-1.5 rounded-md p-2 text-center text-[11px] font-semibold leading-tight transition flex-row gap-3 text-left text-sm ${
+                      className={`category-selector flex h-auto w-full items-center gap-1 rounded-md p-1 text-left text-[10px] font-semibold leading-tight whitespace-normal transition sm:gap-2 sm:p-2 sm:text-sm ${
                         on ? "bg-accent text-accent-foreground" : "text-premium-foreground/75 hover:bg-premium-foreground/10 hover:text-premium-foreground"
                       }`}
                     >
-                      <img src={c.cover} alt="" className="h-9 w-9 rounded-lg object-cover" />
-                      <span className="flex-1">{c.name}</span>
+                      <img src={c.cover} alt="" className="h-7 w-7 shrink-0 rounded-lg object-cover sm:h-9 sm:w-9" />
+                      <span className="min-w-0 flex-1 break-words">{c.name}</span>
                       <span className="hidden text-xs opacity-60 md:inline">{countOf(c)}</span>
                       {c.subs.length > 1 && <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />}
                     </Button>
@@ -121,7 +121,7 @@ function Produtos() {
                                     setSidebarSubOpen(null); go({cat:c.id});
                                   } else { setSidebarSubOpen(s.id); go({cat:c.id,sub:s.id}); }
                                 }}
-                                className={`h-auto w-full justify-between whitespace-normal rounded-md px-2 py-1.5 text-left text-[11px] font-medium leading-tight md:text-sm ${
+                                className={`h-auto w-full justify-between whitespace-normal break-words rounded-md px-1 py-1.5 text-left text-[10px] sm:px-2 sm:text-[11px] font-medium leading-tight md:text-sm ${
                                   sel ? "bg-premium-foreground/15 text-accent" : "text-premium-foreground/70 hover:bg-premium-foreground/10 hover:text-premium-foreground"
                                 }`}
                               >
@@ -136,7 +136,7 @@ function Produtos() {
                                         variant="ghost"
                                         aria-pressed={activeTopic?.id === t.id}
                                         onClick={() => go(activeTopic?.id === t.id ? {cat:c.id,sub:s.id!} : {cat:c.id,sub:s.id!,topic:t.id})}
-                                        className={`h-auto w-full justify-between whitespace-normal rounded-md px-2 py-1.5 text-left text-[11px] leading-tight md:text-sm ${activeTopic?.id === t.id ? 'bg-accent text-accent-foreground' : 'text-premium-foreground/75 hover:bg-premium-foreground/10 hover:text-premium-foreground'}`}
+                                        className={`h-auto w-full justify-between whitespace-normal break-words rounded-md px-1 py-1.5 text-left text-[10px] sm:px-2 sm:text-[11px] leading-tight md:text-sm ${activeTopic?.id === t.id ? 'bg-accent text-accent-foreground' : 'text-premium-foreground/75 hover:bg-premium-foreground/10 hover:text-premium-foreground'}`}
                                       >
                                         <span>{t.name}</span><span className="hidden text-xs opacity-60 md:inline">{t.products.length}</span>
                                       </Button>
@@ -156,20 +156,20 @@ function Produtos() {
           </nav>
         </aside>
 
-        <section className="w-full min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2 border-b pb-3">
-            <h2 className="text-xl font-bold md:text-3xl">{active.name}</h2>
+        <section className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b pb-3">
+            <h2 className="text-base font-bold sm:text-xl md:text-3xl">{active.name}</h2>
             <span className="shrink-0 text-xs text-muted-foreground">{list.length} {list.length === 1 ? "item" : "itens"}</span>
           </div>
 
           {activeSub && <p className="mt-2 text-sm font-semibold text-muted-foreground">{activeSub.name}{activeTopic ? ` / ${activeTopic.name}` : ""}</p>}
 
-          <label className="mt-3 flex items-center gap-2 rounded-full border bg-card px-4 py-2.5">
+          <label className="mt-3 flex min-w-0 items-center gap-1 rounded-full border bg-card px-2 py-2.5 sm:gap-2 sm:px-4">
             <Search className="h-4 w-4 text-muted-foreground" />
-            <input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Buscar por nome ou código…" className="w-full bg-transparent text-sm outline-none" />
+            <input value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder="Buscar por nome ou código…" className="min-w-0 w-full bg-transparent text-xs outline-none sm:text-sm" />
           </label>
 
-          <div key={`${active.id}-${activeSub?.id ?? "all"}-${activeTopic?.id ?? "all"}`} className="product-grid mt-4 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <div key={`${active.id}-${activeSub?.id ?? "all"}-${activeTopic?.id ?? "all"}`} className="product-grid mt-4 grid grid-cols-1 gap-2 min-[500px]:grid-cols-2 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {list.slice(0, limit).map((p) => (
               <ProductCard key={p.id} p={p} onZoom={() => setZoom(p)} />
             ))}
